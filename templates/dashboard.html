@@ -1,0 +1,13 @@
+{% if user.is_authenticated %}
+<h1>Welcome, {{ user.username }} 👋</h1>
+<p>This will be your full dashboard (analytics, donations, stats, etc).</p>
+
+{% else %}
+<h2>Authentication Required</h2>
+<p>You need to login or register to access the dashboard.</p>
+
+<div style="margin-top:20px;">
+    <a href="/auth/login/" class="btn">Login</a>
+    <a href="/accounts/register/" class="btn">Register</a>
+</div>
+{% endif %}

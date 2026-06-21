@@ -1,0 +1,1234 @@
+{% comment %} <div style="background:#e3f2fd;color:#1976d2;padding:10px 18px;border-radius:8px;margin-bottom:18px;font-size:1em;">
+                    <strong>Debug:</strong> Showing new donations for city: <b>{{ profile.city }}</b> ({{ new_donations|length }} found)
+                </div> {% endcomment %}
+{% load static tz %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>NGO Dashboard — HappyTummy</title>
+
+    <!-- Main site styles -->
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <link rel="stylesheet" href="{% static 'css/theme.css' %}">
+    <link rel="icon" href="{% static 'Assets/logo.png' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Leaflet (for map) -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+    <style>
+        :root {
+            --green: #4CAF50;
+            --green-deep: #2E7D32;
+            --green-light: #E8F5E9;
+            --shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            --transition: all 0.25s ease;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #f8f7f3;
+            font-family: 'Poppins', sans-serif;
+            margin: 0;
+        }
+
+        .dashboard-wrapper {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 32px 16px 48px;
+        }
+
+        .dash-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .dash-title-block h1 {
+            font-size: 26px;
+            color: var(--green-deep);
+            margin: 0;
+        }
+
+        .dash-title-block p {
+            margin-top: 6px;
+            color: #666;
+            font-size: 14px;
+        }
+
+        .dash-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .btn-primary,
+        .btn-secondary {
+            border-radius: 999px;
+            padding: 10px 18px;
+            font-size: 14px;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+            transition: var(--transition);
+        }
+
+        .btn-primary {
+            background: var(--green);
+            color: #fff;
+        }
+
+        .btn-primary:hover {
+            background: var(--green-deep);
+            transform: translateY(-1px);
+            box-shadow: 0 6px 15px rgba(76, 175, 80, 0.25);
+        }
+
+        .btn-secondary {
+            background: #eceff1;
+            color: #37474f;
+        }
+
+        .btn-secondary:hover {
+            background: #dde3e7;
+            transform: translateY(-1px);
+        }
+
+        /* Summary cards */
+        .cards-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 18px;
+            margin-bottom: 26px;
+        }
+
+        .card {
+            background: #fff;
+            padding: 20px 18px;
+            border-radius: 16px;
+            box-shadow: var(--shadow);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card::after {
+            content: "";
+            position: absolute;
+            right: -40px;
+            top: -40px;
+            width: 110px;
+            height: 110px;
+            background: radial-gradient(circle at center,
+                    rgba(76, 175, 80, 0.18) 0,
+                    transparent 65%);
+        }
+
+        .card-icon {
+            font-size: 26px;
+            color: var(--green);
+            margin-bottom: 10px;
+        }
+
+        .card-title {
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.7px;
+            color: #757575;
+            margin-bottom: 4px;
+        }
+
+        .card-number {
+            font-size: 30px;
+            font-weight: 800;
+            color: var(--green-deep);
+        }
+
+        .card-sub {
+            font-size: 12px;
+            color: #9e9e9e;
+            margin-top: 4px;
+        }
+
+        .section-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--green-deep);
+            margin: 24px 0 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .section-title i {
+            color: var(--green);
+        }
+
+        /* Profile snapshot */
+        .profile-row {
+            display: grid;
+            grid-template-columns: 2fr 1.5fr;
+            gap: 18px;
+            margin-top: 10px;
+            margin-bottom: 26px;
+        }
+
+        .profile-card {
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: var(--shadow);
+            padding: 18px 18px 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .profile-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 6px;
+        }
+
+        .profile-avatar {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            background: var(--green-light);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            color: var(--green-deep);
+            font-size: 18px;
+        }
+
+        .profile-header h3 {
+            margin: 0;
+            font-size: 16px;
+            color: var(--green-deep);
+        }
+
+        .profile-header span {
+            display: block;
+            font-size: 12px;
+            color: #777;
+        }
+
+        .profile-details-row {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 10px;
+            margin-top: 6px;
+        }
+
+        .profile-detail-item {
+            font-size: 13px;
+            color: #555;
+            display: flex;
+            gap: 6px;
+            align-items: flex-start;
+        }
+
+        .profile-detail-item i {
+            margin-top: 2px;
+            color: var(--green);
+            font-size: 13px;
+            min-width: 14px;
+        }
+
+        /* Map card */
+        .map-card {
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: var(--shadow);
+            padding: 14px 14px 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        #ngoMap {
+            width: 100%;
+            height: 190px;
+            border-radius: 14px;
+            overflow: hidden;
+        }
+
+        .map-caption {
+            font-size: 12px;
+            color: #777;
+        }
+
+        /* Table */
+        .table-wrapper {
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: var(--shadow);
+            padding: 8px 0 4px;
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 500px;
+        }
+
+        th,
+        td {
+            padding: 12px 18px;
+            text-align: left;
+            border-bottom: 1px solid #f1f1f1;
+            font-size: 14px;
+        }
+
+        th {
+            background: #fafafa;
+            font-weight: 600;
+            color: #555;
+            text-transform: uppercase;
+            font-size: 12px;
+            letter-spacing: 0.5px;
+        }
+
+        tbody tr:hover {
+            background: #fafafa;
+        }
+
+        .status-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 10px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .status-complete {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-pending {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .status-danger {
+            background: #fdecea;
+            color: #b71c1c;
+        }
+
+        .status-neutral {
+            background: #eceff1;
+            color: #455a64;
+        }
+
+        /* Chart card */
+        .chart-card {
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: var(--shadow);
+            margin-top: 26px;
+            padding: 20px 18px 24px;
+        }
+
+        /* Modals */
+        .modal-backdrop {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.45);
+            backdrop-filter: blur(3px);
+            z-index: 999;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal {
+            background: #fff;
+            border-radius: 18px;
+            box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
+            max-width: 420px;
+            width: 92%;
+            padding: 22px 20px 20px;
+            animation: slideIn 0.25s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-16px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 14px;
+        }
+
+        .modal-header h3 {
+            margin: 0;
+            font-size: 18px;
+            color: var(--green-deep);
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 22px;
+            color: #9e9e9e;
+            cursor: pointer;
+            padding: 0;
+        }
+
+        .form-group {
+            margin-bottom: 14px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: #555;
+            margin-bottom: 4px;
+        }
+
+        .modal-input,
+        .modal-textarea {
+            width: 100%;
+            padding: 10px 11px;
+            font-size: 14px;
+            border-radius: 9px;
+            border: 1px solid #d0d7de;
+            outline: none;
+            transition: var(--transition);
+            font-family: inherit;
+        }
+
+        .modal-input:focus,
+        .modal-textarea:focus {
+            border-color: var(--green);
+            box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.15);
+        }
+
+        .modal-textarea {
+            resize: vertical;
+            min-height: 70px;
+        }
+
+        .modal-footer {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .modal-footer .btn-primary,
+        .modal-footer .btn-secondary {
+            flex: 1;
+            justify-content: center;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .dash-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .dash-actions {
+                width: 100%;
+            }
+
+            .dash-actions .btn-primary,
+            .dash-actions .btn-secondary {
+                flex: 1;
+                justify-content: center;
+            }
+
+            .profile-row {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Keep leaflet map UNDER everything */
+        .leaflet-pane,
+        .leaflet-control-container {
+            z-index: 1 !important;
+        }
+
+        /* Modal must be ABOVE leaflet */
+        .modal-backdrop {
+            z-index: 9999 !important;
+        }
+
+        .modal {
+            z-index: 10000 !important;
+        }
+    </style>
+</head>
+
+<body>
+
+    {% include 'partials/navbar.html' %}
+
+    <div class="dashboard-wrapper" style="max-width: 900px; margin: 0 auto; padding: 40px 0 60px;">
+
+            {% if error %}
+                <div style="background:#fff3cd;color:#856404;padding:24px 18px;border-radius:12px;margin:32px auto 0;max-width:500px;text-align:center;font-size:1.1em;">
+                    <strong>{{ error }}</strong><br>
+                    <br>
+                    If you just registered, please try logging out and registering again, or contact support.
+                </div>
+            {% else %}
+                {% if messages %}
+                    <div class="dashboard-flash-stack">
+                        {% for message in messages %}
+                            <div class="dashboard-flash-message {% if message.tags %}dashboard-flash-{{ message.tags }}{% endif %}">
+                                {{ message }}
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+                <div style="background: #fff; border-radius: 18px; box-shadow: 0 4px 24px rgba(44,62,80,0.07); padding: 36px 32px 32px; margin-bottom: 32px;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 18px;">
+                        <div>
+                            <h1 style="font-size: 2.1rem; color: #2E7D32; margin: 0 0 6px; font-family: 'Playfair Display', serif;">Welcome, {{ profile.name }}</h1>
+                            <div style="color: #5f6d54; font-size: 1.08rem;">Manage your NGO's food distribution and impact.</div>
+                        </div>
+                        <div style="display: flex; gap: 12px;">
+                            <button class="btn btn--primary" style="font-size: 1rem; padding: 12px 24px;" onclick="openProfileModal()">
+                                <i class="fas fa-user-edit"></i> Edit Profile
+                            </button>
+                            <button class="btn btn-primary" style="font-size: 1rem; padding: 12px 24px;" onclick="openRequestModal()">
+                                <i class="fas fa-plus"></i> Request Food
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div style="display: flex; flex-wrap: wrap; gap: 24px; margin-bottom: 36px;">
+                    <div style="flex: 1 1 220px; background: #fff; border-radius: 14px; box-shadow: 0 2px 12px rgba(44,62,80,0.06); padding: 24px 18px; text-align: center;">
+                        <div style="font-size: 2.2rem; color: #4CAF50; margin-bottom: 8px;"><i class="fas fa-hand-holding-heart"></i></div>
+                        <div style="font-size: 1.1rem; color: #757575;">Total Food Received</div>
+                        <div style="font-size: 2.1rem; font-weight: 700; color: #2E7D32;">{{ total_food_received }}</div>
+                    </div>
+                    <div style="flex: 1 1 220px; background: #fff; border-radius: 14px; box-shadow: 0 2px 12px rgba(44,62,80,0.06); padding: 24px 18px; text-align: center;">
+                        <div style="font-size: 2.2rem; color: #FFA000; margin-bottom: 8px;"><i class="fas fa-truck"></i></div>
+                        <div style="font-size: 1.1rem; color: #757575;">Pending Distributions</div>
+                        <div style="font-size: 2.1rem; font-weight: 700; color: #FFA000;">{{ pending_distributions }}</div>
+                    </div>
+                    <div style="flex: 1 1 220px; background: #fff; border-radius: 14px; box-shadow: 0 2px 12px rgba(44,62,80,0.06); padding: 24px 18px; text-align: center;">
+                        <div style="font-size: 2.2rem; color: #388E3C; margin-bottom: 8px;"><i class="fas fa-check-circle"></i></div>
+                        <div style="font-size: 1.1rem; color: #757575;">Completed Distributions</div>
+                        <div style="font-size: 2.1rem; font-weight: 700; color: #388E3C;">{{ completed_distributions }}</div>
+                    </div>
+                </div>
+                <div style="display: flex; flex-wrap: wrap; gap: 32px; align-items: flex-start;">
+                    <div style="flex: 2 1 340px; background: #fff; border-radius: 14px; box-shadow: 0 2px 12px rgba(44,62,80,0.06); padding: 28px 22px;">
+                        <h2 style="font-size: 1.3rem; color: #2E7D32; margin: 0 0 18px; font-family: 'Playfair Display', serif;">Profile Snapshot</h2>
+                        <div style="display: flex; align-items: center; gap: 18px; margin-bottom: 12px;">
+                            <div style="width: 54px; height: 54px; border-radius: 50%; background: #E8F5E9; display: flex; align-items: center; justify-content: center; font-size: 1.7rem; color: #2E7D32; font-weight: 700;">{{ profile.name|first|upper }}</div>
+                            <div>
+                                <div style="font-size: 1.1rem; font-weight: 600; color: #2E7D32;">{{ profile.name }}</div>
+                                <div style="font-size: 0.98rem; color: #666;">{{ profile.contact_person }}</div>
+                            </div>
+                        </div>
+                        <div style="font-size: 1rem; color: #555; margin-bottom: 6px;"><i class="fas fa-phone-alt" style="color:#4CAF50;margin-right:6px;"></i>{{ profile.phone }}</div>
+                        <div style="font-size: 1rem; color: #555; margin-bottom: 6px;"><i class="fas fa-map-marker-alt" style="color:#FFA000;margin-right:6px;"></i>{{ profile.address }}, {{ profile.city }}</div>
+                    </div>
+                    <div style="flex: 1 1 220px; background: #fff; border-radius: 14px; box-shadow: 0 2px 12px rgba(44,62,80,0.06); padding: 28px 22px; min-width: 220px;">
+                        <h2 style="font-size: 1.1rem; color: #2E7D32; margin: 0 0 12px; font-family: 'Playfair Display', serif;">Location</h2>
+                        <div id="ngoMap" style="width:100%;height:180px;border-radius:12px;"></div>
+                        <div style="font-size: 0.95rem; color: #888; margin-top: 8px;">{{ profile.address }}, {{ profile.city }}</div>
+                    </div>
+                </div>
+
+                <section class="ngo-gallery-nav-section">
+                    <a href="{% url 'ngo_gallery' %}" class="ngo-gallery-nav-card">
+                        <div class="ngo-gallery-nav-icon">
+                            <i class="fas fa-camera-retro"></i>
+                        </div>
+                        <div class="ngo-gallery-nav-copy">
+                            <h2>Delivery Transparency Proof</h2>
+                            <p>{{ pending_transparency_count }} deliver{{ pending_transparency_count|pluralize:"y,ies" }} awaiting proof upload. Add distribution photos on the dedicated transparency page.</p>
+                        </div>
+                        <span class="ngo-gallery-nav-action">Open Gallery</span>
+                    </a>
+                </section>
+
+                <div style="background:#fff;border-radius:14px;box-shadow:0 2px 12px rgba(44,62,80,0.06);padding:24px 22px;margin:26px 0 30px;">
+                    <h2 style="font-size: 1.15rem; color: #2E7D32; margin: 0 0 12px; font-family: 'Playfair Display', serif;">
+                        <i class="fas fa-location-dot" style="color:#4CAF50;margin-right:6px;"></i>
+                        Live Volunteer Tracking
+                    </h2>
+                    <div id="volunteerTrackingMap" style="width:100%;height:300px;border-radius:12px;"></div>
+                    <div id="volunteerTrackingMeta" style="font-size:0.95rem;color:#666;margin-top:8px;">
+                        Waiting for volunteer location updates...
+                    </div>
+                </div>
+
+
+                <h2 class="section-title">
+                    <i class="fas fa-bell"></i>
+                    Live Donation Notifications
+                </h2>
+                <div id="ngoNotificationSummary" style="margin:0 0 10px;color:#5f6d54;font-size:0.95rem;">
+                    Nearby donations update automatically as expiry time shrinks.
+                </div>
+                <div class="table-wrapper" style="margin-bottom:32px;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Food Type</th>
+                                <th>Quantity</th>
+                                <th>Restaurant</th>
+                                <th>Notified</th>
+                                <th>Food Safety</th>
+                                <th>Distance</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ngoNotificationsBody">
+                            {% for donation in new_donations %}
+                            <tr>
+                                <td>{{ donation.food_type }}</td>
+                                <td>{{ donation.quantity }} meals</td>
+                                <td>{{ donation.restaurant.business_name }}</td>
+                                <td>{{ donation.timestamp|localtime|date:"M d, Y — h:i A" }}</td>
+                                <td>
+                                    <span class="status-pill {{ donation.safety_badge_class }}">
+                                        <i class="fas {{ donation.safety_icon }}"></i> {{ donation.safety_status }}
+                                    </span>
+                                    <div style="margin-top:6px;font-size:12px;color:#666;">
+                                        Expires: {{ donation.expiry_at|localtime|date:"M d, Y h:i A"|default:"Not set" }}
+                                    </div>
+                                </td>
+                                <td>
+                                    <form method="post" style="display:inline;">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="action" value="accept_donation">
+                                        <input type="hidden" name="donation_id" value="{{ donation.id }}">
+                                        <button type="submit" class="btn btn-primary" style="padding:6px 18px;font-size:13px;">Accept</button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="6" style="text-align:center; padding: 24px; color:#777;">
+                                    No new donations available in your city right now.
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <h2 class="section-title">
+                    <i class="fas fa-clipboard-list"></i>
+                    Your Food Requests
+                </h2>
+                <div class="table-wrapper" style="margin-bottom:32px;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Food Type</th>
+                                <th>Quantity</th>
+                                <th>Date & Time</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for req in my_food_requests %}
+                            <tr>
+                                <td>{{ req.food_type }}</td>
+                                <td>{{ req.quantity }}</td>
+                                <td>{{ req.timestamp|localtime|date:"M d, Y — h:i A" }}</td>
+                                <td>
+                                    {% if req.fulfilled %}
+                                        <span class="status-pill status-complete"><i class="fas fa-check"></i> Fulfilled</span>
+                                    {% elif req.accepted_by %}
+                                        <span class="status-pill status-pending"><i class="fas fa-clock"></i> Pending</span>
+                                    {% else %}
+                                        <span class="status-pill" style="background:#e3f2fd;color:#1976d2;"><i class="fas fa-hourglass-start"></i> Awaiting Acceptance</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="4" style="text-align:center; padding: 24px; color:#777;">You have not made any food requests yet.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <h2 class="section-title">
+                    <i class="fas fa-utensils"></i>
+                    Recent food received
+                </h2>
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Food Type</th>
+                                <th>Quantity</th>
+                                <th>Restaurant</th>
+                                <th>Date & Time</th>
+                                <th>Status</th>
+                                <th>Food Safety</th>
+                                <th>OTP</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for pickup in recent_food_pickups %}
+                            <tr>
+                                {% if pickup.request %}
+                                <td>{{ pickup.request.food_type }}</td>
+                                <td>{{ pickup.request.quantity }} meals</td>
+                                <td>{{ pickup.request.restaurant.business_name }}</td>
+                                <td>{{ pickup.request.timestamp|localtime|date:"M d, Y ? h:i A" }}</td>
+                                {% else %}
+                                <td>{{ pickup.ngo_request.food_type }}</td>
+                                <td>{{ pickup.ngo_request.quantity }} meals</td>
+                                <td>{% if pickup.ngo_request.accepted_by %}{{ pickup.ngo_request.accepted_by.business_name }}{% else %}-{% endif %}</td>
+                                <td>{{ pickup.ngo_request.timestamp|localtime|date:"M d, Y ? h:i A" }}</td>
+                                {% endif %}
+                                <td>
+                                    {% if pickup.completed %}
+                                        <span class="status-pill status-complete"><i class="fas fa-check"></i> Delivered</span>
+                                    {% elif pickup.delivered_to_ngo %}
+                                        <span class="status-pill status-pending"><i class="fas fa-box-open"></i> Delivered by Volunteer</span>
+                                    {% elif pickup.assigned_to %}
+                                        <span class="status-pill status-pending"><i class="fas fa-truck"></i> In Transit</span>
+                                    {% else %}
+                                        <span class="status-pill" style="background:#e3f2fd;color:#1976d2;"><i class="fas fa-hourglass-start"></i> Awaiting Volunteer</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if pickup.request %}
+                                    <span class="status-pill {{ pickup.request.safety_badge_class }}">
+                                        <i class="fas {{ pickup.request.safety_icon }}"></i> {{ pickup.request.safety_status }}
+                                    </span>
+                                    <div style="margin-top:6px;font-size:12px;color:#666;">
+                                        Expires: {{ pickup.request.expiry_at|localtime|date:"M d, Y h:i A"|default:"Not set" }}
+                                    </div>
+                                    {% else %}
+                                    <span style="color:#777;font-size:13px;">Not required</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if not pickup.completed %}
+                                    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                                        <span style="font-size:13px;font-weight:700;color:#2E7D32;letter-spacing:1px;background:#E8F5E9;padding:6px 10px;border-radius:999px;">
+                                            {{ pickup.delivery_otp }}
+                                        </span>
+                                        <button
+                                            type="button"
+                                            onclick="copyOtp('{{ pickup.delivery_otp }}', this)"
+                                            style="border:none;background:#f1f8e9;color:#2E7D32;padding:6px 10px;border-radius:999px;cursor:pointer;font-size:12px;font-weight:600;"
+                                        >
+                                            Copy OTP
+                                        </button>
+                                    </div>
+                                    <div style="margin-top:6px;font-size:12px;color:#666;">
+                                        Share this code with the volunteer to confirm handoff.
+                                    </div>
+                                    {% else %}
+                                    <span style="color:#777;font-size:13px;">Not needed</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if pickup.delivered_to_ngo and not pickup.completed %}
+                                    <form method="post" style="display:inline;">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="action" value="confirm_reached">
+                                        <input type="hidden" name="pickup_id" value="{{ pickup.id }}">
+                                        <button type="submit" class="btn btn-primary" style="padding:6px 18px;font-size:13px;">Accept</button>
+                                    </form>
+                                    {% elif pickup.completed %}
+                                    <span style="color:#2E7D32;font-size:13px;">Confirmed</span>
+                                    {% else %}
+                                    <span style="color:#777;font-size:13px;">Pending arrival</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="8" style="text-align:center; padding: 24px; color:#777;">
+                                    No food received yet. Food pickups in your city will appear here!
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                                <!-- Chart -->
+                <div class="chart-card">
+                    <h2 class="section-title" style="margin-top:0;">
+                        <i class="fas fa-chart-pie"></i>
+                        Food received by restaurant ({{ month_label }})
+                    </h2>
+                    <canvas id="ngoChart" style="min-height:220px;height:220px;max-width:520px;width:100%;display:block;margin:0 auto;"></canvas>
+                    <div id="ngoChartEmpty" style="display:none;text-align:center;color:#777;padding:18px 0;">
+                        No completed deliveries for this month yet.
+                    </div>
+                </div>
+
+                <!-- Request Food Modal (Professional) -->
+                <div class="modal-backdrop" id="requestModal" style="display:none;">
+                    <div class="modal" style="max-width:440px;">
+                        <div class="modal-header" style="border-bottom:1px solid #e0e0e0;padding-bottom:10px;">
+                            <h3 style="font-size:1.25rem;color:#2E7D32;margin:0;display:flex;align-items:center;gap:8px;">
+                                <i class="fas fa-utensils" style="color:#FFA000;"></i> Request Food
+                            </h3>
+                            <button class="modal-close" onclick="closeRequestModal()" style="font-size:1.5rem;">&times;</button>
+                        </div>
+                        <form method="POST" action="" style="margin-top:18px;">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="request_food">
+                            <div class="form-group">
+                                <label class="form-label" style="font-weight:600;color:#555;">Food Type</label>
+                                <input class="modal-input" name="food_type" placeholder="e.g. Rice, Sandwiches" required style="border:1px solid #d0d7de;">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" style="font-weight:600;color:#555;">Quantity</label>
+                                <input class="modal-input" name="quantity" type="number" min="1" placeholder="e.g. 100" required style="border:1px solid #d0d7de;">
+                            </div>
+                            <div class="modal-footer" style="margin-top:18px;">
+                                <button type="submit" class="btn-primary" style="font-size:1rem;padding:10px 22px;border-radius:999px;">
+                                    <i class="fas fa-paper-plane"></i> Submit Request
+                                </button>
+                                <button type="button" class="btn-secondary" onclick="closeRequestModal()" style="font-size:1rem;padding:10px 22px;border-radius:999px;">Cancel</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            {% endif %}
+    </div>
+
+    <!-- Profile Modal (Professional) -->
+    <div class="modal-backdrop" id="profileModal">
+        <div class="modal" style="max-width:440px;">
+            <div class="modal-header" style="border-bottom:1px solid #e0e0e0;padding-bottom:10px;">
+                <h3 style="font-size:1.25rem;color:#2E7D32;margin:0;display:flex;align-items:center;gap:8px;">
+                    <i class="fas fa-user-edit" style="color:#4CAF50;"></i> Edit Profile
+                </h3>
+                <button class="modal-close" onclick="closeProfileModal()" style="font-size:1.5rem;">&times;</button>
+            </div>
+            <form method="POST" action="" style="margin-top:18px;">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="update_profile">
+                <div class="form-group">
+                    <label class="form-label" style="font-weight:600;color:#555;">NGO Name</label>
+                    <input class="modal-input" name="name" value="{{ profile.name }}" required style="border:1px solid #d0d7de;">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" style="font-weight:600;color:#555;">Contact Person</label>
+                    <input class="modal-input" name="contact_person" value="{{ profile.contact_person }}" required style="border:1px solid #d0d7de;">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" style="font-weight:600;color:#555;">Phone</label>
+                    <input class="modal-input" name="phone" value="{{ profile.phone }}" required style="border:1px solid #d0d7de;">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" style="font-weight:600;color:#555;">Address</label>
+                    <textarea class="modal-textarea" name="address" required style="border:1px solid #d0d7de;">{{ profile.address }}</textarea>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" style="font-weight:600;color:#555;">City</label>
+                    <input class="modal-input" name="city" value="{{ profile.city }}" required style="border:1px solid #d0d7de;">
+                </div>
+                <div class="modal-footer" style="margin-top:18px;">
+                    <button type="submit" class="btn-primary" style="font-size:1rem;padding:10px 22px;border-radius:999px;">
+                        <i class="fas fa-save"></i> Save
+                    </button>
+                    <button type="button" class="btn-secondary" onclick="closeProfileModal()" style="font-size:1rem;padding:10px 22px;border-radius:999px;">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        // Modal helpers
+        function openProfileModal() {
+            document.getElementById("profileModal").style.display = "flex";
+        }
+        function closeProfileModal() {
+            document.getElementById("profileModal").style.display = "none";
+        }
+        function openRequestModal() {
+            document.getElementById('requestModal').style.display = 'flex';
+        }
+        function closeRequestModal() {
+            document.getElementById('requestModal').style.display = 'none';
+        }
+
+        function copyOtp(otp, button) {
+            if (!navigator.clipboard) {
+                button.textContent = "Copy manually";
+                return;
+            }
+
+            navigator.clipboard.writeText(otp).then(() => {
+                const oldText = button.textContent;
+                button.textContent = "Copied";
+                setTimeout(() => {
+                    button.textContent = oldText;
+                }, 1500);
+            }).catch(() => {
+                button.textContent = "Copy failed";
+            });
+        }
+
+        // Close modals when clicking on backdrop
+        document.querySelectorAll('.modal-backdrop').forEach(backdrop => {
+            backdrop.addEventListener('click', function (e) {
+                if (e.target === this) {
+                    this.style.display = 'none';
+                }
+            });
+        });
+
+        // ESC closes modals
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') {
+                closeProfileModal();
+                closeRequestModal();
+            }
+        });
+
+        // Chart
+        document.addEventListener("DOMContentLoaded", function () {
+            const labels = {{ monthly_labels|safe }};
+            const values = {{ monthly_values|safe }};
+            const chartCanvas = document.getElementById("ngoChart");
+            const emptyState = document.getElementById("ngoChartEmpty");
+
+            if (!labels.length || !values.length) {
+                chartCanvas.style.display = "none";
+                emptyState.style.display = "block";
+            } else {
+                const ctx = chartCanvas.getContext("2d");
+                new Chart(ctx, {
+                    type: "pie",
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            data: values,
+                            backgroundColor: [
+                                "#2b8a3e",
+                                "#4CAF50",
+                                "#7BA46C",
+                                "#A3B18A",
+                                "#C2C5AA",
+                                "#E6DCC4"
+                            ],
+                            borderColor: "#ffffff",
+                            borderWidth: 2
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: { position: "bottom" },
+                            tooltip: {
+                                callbacks: {
+                                    label: (ctx) => `${ctx.label}: ${ctx.raw} meals`
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Base NGO location map
+            const lat = Number('{{ lat }}');
+            const lng = Number('{{ lng }}');
+
+            const map = L.map('ngoMap').setView([lat, lng], 13);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19,
+                attribution: '&copy; OpenStreetMap contributors'
+            }).addTo(map);
+            L.marker([lat, lng]).addTo(map)
+                .bindPopup(`<strong>{{ profile.name|escapejs }}</strong><br>{{ profile.city|escapejs }}`)
+                .openPopup();
+
+            // Live volunteer tracking map
+            const trackingMap = L.map('volunteerTrackingMap').setView([lat, lng], 12);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19,
+                attribution: '&copy; OpenStreetMap contributors'
+            }).addTo(trackingMap);
+
+            const ngoMarker = L.marker([lat, lng]).addTo(trackingMap);
+            ngoMarker.bindPopup(`<strong>{{ profile.name|escapejs }}</strong><br>NGO Hub`);
+
+            const volunteerMarkers = {};
+            const volunteerRoutes = {};
+            const trackingMeta = document.getElementById("volunteerTrackingMeta");
+            const notificationBody = document.getElementById("ngoNotificationsBody");
+            const notificationSummary = document.getElementById("ngoNotificationSummary");
+
+            function escapeHtml(value) {
+                return String(value ?? "").replace(/[&<>"']/g, (char) => ({
+                    "&": "&amp;",
+                    "<": "&lt;",
+                    ">": "&gt;",
+                    '"': "&quot;",
+                    "'": "&#39;"
+                }[char]));
+            }
+
+            function renderNgoNotifications(notifications) {
+                if (!notificationBody) {
+                    return;
+                }
+                if (!notifications.length) {
+                    notificationBody.innerHTML = `
+                        <tr>
+                            <td colspan="7" style="text-align:center; padding: 24px; color:#777;">
+                                No active nearby donation notifications right now.
+                            </td>
+                        </tr>
+                    `;
+                    return;
+                }
+
+                notificationBody.innerHTML = notifications.map((item) => {
+                    const notifiedAt = item.posted_at ? new Date(item.posted_at).toLocaleString() : "Just now";
+                    const expiresAt = item.expires_at ? new Date(item.expires_at).toLocaleString() : "Not set";
+                    const distance = item.distance_km == null ? "In city" : `${Number(item.distance_km).toFixed(2)} km`;
+                    const safetyClass =
+                        item.safety_status === "Expired" ? "status-danger" :
+                        item.safety_status === "Expiring Soon" ? "status-pending" :
+                        item.safety_status === "Safe" ? "status-complete" : "status-neutral";
+
+                    return `
+                        <tr>
+                            <td>${escapeHtml(item.food_type)}</td>
+                            <td>${escapeHtml(item.quantity)} meals</td>
+                            <td>${escapeHtml(item.restaurant_name)}</td>
+                            <td>
+                                ${escapeHtml(notifiedAt)}
+                                <div style="margin-top:6px;font-size:12px;color:#666;">${escapeHtml(item.time_remaining_readable)} left</div>
+                            </td>
+                            <td>
+                                <span class="status-pill ${safetyClass}">${escapeHtml(item.safety_status)}</span>
+                                <div style="margin-top:6px;font-size:12px;color:#666;">Expires: ${escapeHtml(expiresAt)} | Radius: ${escapeHtml(item.radius_km)} km</div>
+                            </td>
+                            <td>${escapeHtml(distance)}</td>
+                            <td>
+                                <form method="post" style="display:inline;">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="action" value="accept_donation">
+                                    <input type="hidden" name="donation_id" value="${escapeHtml(item.id)}">
+                                    <button type="submit" class="btn btn-primary" style="padding:6px 18px;font-size:13px;">Accept</button>
+                                </form>
+                            </td>
+                        </tr>
+                    `;
+                }).join("");
+            }
+
+            function formatUpdatedAt(updatedAt) {
+                if (!updatedAt) {
+                    return "Just now";
+                }
+                const dt = new Date(updatedAt);
+                if (Number.isNaN(dt.getTime())) {
+                    return "Just now";
+                }
+                return dt.toLocaleTimeString();
+            }
+
+            function routeColor(taskId) {
+                const palette = ["#e53935", "#1e88e5", "#43a047", "#fb8c00", "#8e24aa", "#00897b"];
+                const num = Number(taskId) || 0;
+                return palette[num % palette.length];
+            }
+
+            function formatDistance(meters) {
+                if (!Number.isFinite(meters)) {
+                    return "-";
+                }
+                if (meters < 1000) {
+                    return `${Math.round(meters)} m`;
+                }
+                return `${(meters / 1000).toFixed(2)} km`;
+            }
+
+            function directDistanceMeters(fromLat, fromLng) {
+                return trackingMap.distance([fromLat, fromLng], [lat, lng]);
+            }
+
+            async function fetchRoadRoute(fromLat, fromLng) {
+                const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${fromLng},${fromLat};${lng},${lat}?overview=full&geometries=geojson`;
+                const response = await fetch(osrmUrl);
+                if (!response.ok) {
+                    throw new Error("Routing API failed");
+                }
+                const data = await response.json();
+                const route = data && data.routes && data.routes[0];
+                if (!route || !route.geometry || !route.geometry.coordinates) {
+                    throw new Error("No route found");
+                }
+                const latLngs = route.geometry.coordinates.map((point) => [point[1], point[0]]);
+                return {
+                    latLngs,
+                    distance: route.distance,
+                };
+            }
+
+            function setRoutePolyline(taskId, latLngs) {
+                const markerId = String(taskId);
+                const color = routeColor(taskId);
+                if (volunteerRoutes[markerId]) {
+                    volunteerRoutes[markerId].setLatLngs(latLngs);
+                    return;
+                }
+                volunteerRoutes[markerId] = L.polyline(latLngs, {
+                    color,
+                    weight: 5,
+                    opacity: 0.8,
+                }).addTo(trackingMap);
+            }
+
+            async function updateVolunteerMarkerAndRoute(loc) {
+                const markerId = String(loc.task_id);
+                const liveDistance = directDistanceMeters(loc.lat, loc.lng);
+                let routeDistance = liveDistance;
+
+                try {
+                    const routeData = await fetchRoadRoute(loc.lat, loc.lng);
+                    setRoutePolyline(loc.task_id, routeData.latLngs);
+                    routeDistance = routeData.distance;
+                } catch (error) {
+                    setRoutePolyline(loc.task_id, [
+                        [loc.lat, loc.lng],
+                        [lat, lng],
+                    ]);
+                }
+
+                const popupHtml = `
+                    <strong>${loc.volunteer_name}</strong><br>
+                    ${loc.food_type} (${loc.quantity} meals)<br>
+                    Pickup: ${loc.pickup_from}<br>
+                    Distance to NGO: ${formatDistance(routeDistance)}<br>
+                    Last update: ${formatUpdatedAt(loc.updated_at)}
+                `;
+
+                if (volunteerMarkers[markerId]) {
+                    volunteerMarkers[markerId].setLatLng([loc.lat, loc.lng]).bindPopup(popupHtml);
+                } else {
+                    volunteerMarkers[markerId] = L.marker([loc.lat, loc.lng]).addTo(trackingMap).bindPopup(popupHtml);
+                }
+
+                return {
+                    taskId: markerId,
+                    distanceMeters: routeDistance,
+                };
+            }
+
+            async function refreshVolunteerLocations() {
+                try {
+                    const response = await fetch("/api/ngo/live-volunteers/");
+                    if (!response.ok) {
+                        throw new Error("API error");
+                    }
+                    const data = await response.json();
+                    const locations = data.locations || [];
+
+                    const visibleTaskIds = new Set();
+                    const updatePromises = locations.map((loc) => {
+                        const markerId = String(loc.task_id);
+                        visibleTaskIds.add(markerId);
+                        return updateVolunteerMarkerAndRoute(loc);
+                    });
+                    const updates = await Promise.all(updatePromises);
+
+                    Object.keys(volunteerMarkers).forEach((markerId) => {
+                        if (!visibleTaskIds.has(markerId)) {
+                            trackingMap.removeLayer(volunteerMarkers[markerId]);
+                            delete volunteerMarkers[markerId];
+                        }
+                    });
+                    Object.keys(volunteerRoutes).forEach((markerId) => {
+                        if (!visibleTaskIds.has(markerId)) {
+                            trackingMap.removeLayer(volunteerRoutes[markerId]);
+                            delete volunteerRoutes[markerId];
+                        }
+                    });
+
+                    if (locations.length > 0) {
+                        const nearest = updates.reduce((best, current) => {
+                            if (!best || current.distanceMeters < best.distanceMeters) {
+                                return current;
+                            }
+                            return best;
+                        }, null);
+                        const nearestText = nearest ? ` Nearest volunteer: ${formatDistance(nearest.distanceMeters)} away.` : "";
+                        trackingMeta.textContent = `${locations.length} active volunteer location update(s).${nearestText}`;
+                    } else {
+                        trackingMeta.textContent = "No active volunteer locations right now.";
+                    }
+                } catch (error) {
+                    trackingMeta.textContent = "Unable to fetch live volunteer locations.";
+                }
+            }
+
+            async function refreshNgoNotifications() {
+                try {
+                    const response = await fetch("/api/ngo/notifications/");
+                    if (!response.ok) {
+                        throw new Error("Notification API error");
+                    }
+                    const data = await response.json();
+                    renderNgoNotifications(data.notifications || []);
+                    if (notificationSummary) {
+                        const total = (data.notifications || []).length;
+                        notificationSummary.textContent = `${total} live donation notification(s). Unread: ${data.unread_count || 0}.`;
+                    }
+                    await fetch("/api/ngo/notifications/read/", {
+                        method: "POST",
+                        headers: { "X-CSRFToken": "{{ csrf_token }}" }
+                    });
+                } catch (error) {
+                    if (notificationSummary) {
+                        notificationSummary.textContent = "Unable to refresh live donation notifications right now.";
+                    }
+                }
+            }
+
+            refreshVolunteerLocations();
+            setInterval(refreshVolunteerLocations, 8000);
+            refreshNgoNotifications();
+            setInterval(refreshNgoNotifications, 15000);
+        });
+    </script>
+
+</body>
+
+</html>

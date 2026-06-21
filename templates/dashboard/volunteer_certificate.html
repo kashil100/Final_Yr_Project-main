@@ -1,0 +1,190 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Volunteer Certificate — HappyTummy</title>
+    <link rel="icon" href="{% static 'Assets/logo.png' %}">
+    <style>
+        body {
+            margin: 0;
+            padding: 24px;
+            background: #f6f4ec;
+            font-family: "Poppins", Arial, sans-serif;
+            color: #2d3b2e;
+        }
+        .certificate-shell {
+            max-width: 980px;
+            margin: 0 auto;
+        }
+        .actions {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        .action-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 16px;
+            border-radius: 8px;
+            text-decoration: none;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            background: #2e7d32;
+            color: #fff;
+        }
+        .action-btn.secondary {
+            background: #455a64;
+        }
+        .certificate {
+            border: 12px solid #d4af37;
+            background: #fff;
+            border-radius: 14px;
+            padding: 36px 42px;
+            box-shadow: 0 10px 24px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+        .certificate:before,
+        .certificate:after {
+            content: "";
+            position: absolute;
+            width: 180px;
+            height: 180px;
+            border-radius: 50%;
+            background: rgba(212, 175, 55, 0.1);
+        }
+        .certificate:before {
+            top: -80px;
+            right: -60px;
+        }
+        .certificate:after {
+            bottom: -80px;
+            left: -60px;
+        }
+        .logo-row {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .logo-row img {
+            height: 52px;
+            width: auto;
+        }
+        .title {
+            text-align: center;
+            font-size: 2.2rem;
+            margin: 0;
+            color: #1b5e20;
+            font-family: "Georgia", serif;
+            letter-spacing: 1px;
+        }
+        .subtitle {
+            text-align: center;
+            margin: 8px 0 30px;
+            color: #5f6d54;
+            font-size: 1rem;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+        .body {
+            text-align: center;
+            font-size: 1.1rem;
+            line-height: 1.7;
+        }
+        .volunteer-name {
+            margin: 16px 0;
+            font-size: 2rem;
+            font-weight: 700;
+            color: #2e7d32;
+            font-family: "Georgia", serif;
+            text-transform: capitalize;
+        }
+        .metrics {
+            margin: 24px auto;
+            display: inline-block;
+            padding: 14px 18px;
+            border-radius: 10px;
+            background: #f1f8e9;
+            border: 1px solid #c5e1a5;
+            font-weight: 600;
+        }
+        .footer {
+            margin-top: 36px;
+            display: flex;
+            justify-content: space-between;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        .sign {
+            min-width: 220px;
+        }
+        .line {
+            margin-top: 28px;
+            border-top: 2px solid #9e9e9e;
+            width: 220px;
+        }
+        .muted {
+            color: #607d8b;
+            font-size: 0.95rem;
+            margin-top: 6px;
+        }
+        @media print {
+            .actions { display: none; }
+            body { background: #fff; padding: 0; }
+            .certificate-shell { max-width: 100%; }
+            .certificate {
+                box-shadow: none;
+                border-width: 10px;
+                border-radius: 0;
+                min-height: 94vh;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="certificate-shell">
+        <div class="actions">
+            <a href="{% url 'volunteer_dashboard' %}" class="action-btn secondary">← Back to Dashboard</a>
+            <button onclick="window.print()" class="action-btn">Print / Save as PDF</button>
+        </div>
+
+        <section class="certificate">
+            <div class="logo-row">
+                <img src="{% static 'Assets/logo.png' %}" alt="HappyTummy logo">
+            </div>
+            <h1 class="title">Certificate of Appreciation</h1>
+            <p class="subtitle">HappyTummy Volunteer Recognition</p>
+
+            <div class="body">
+                This certificate is proudly presented to
+                <div class="volunteer-name">{{ profile.full_name }}</div>
+                in recognition of dedicated service and compassionate support in food rescue and delivery efforts for
+                <strong>{{ monthly_label }}</strong>.
+
+                <div class="metrics">
+                    Deliveries Completed: {{ monthly_completed_count }} (Target: {{ monthly_target }})
+                </div>
+
+                Your commitment has helped reduce food waste and feed communities in need.
+            </div>
+
+            <div class="footer">
+                <div class="sign">
+                    <div class="line"></div>
+                    <div class="muted">Program Coordinator, HappyTummy</div>
+                </div>
+                <div class="sign">
+                    <div class="line"></div>
+                    <div class="muted">Issued on: {{ issued_on|date:"F d, Y" }}</div>
+                </div>
+            </div>
+        </section>
+    </div>
+</body>
+</html>

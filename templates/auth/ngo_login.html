@@ -1,0 +1,167 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>NGO Login — HappyTummy Foundation</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Favicon -->
+    <link rel="icon" href="{% static 'Assets/logo.png' %}" type="image/png" />
+
+    <!-- Fonts -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&family=Playfair+Display:wght@600;700&display=swap"
+        rel="stylesheet">
+
+    <!-- Global CSS -->
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+
+    <!-- Page-specific styling -->
+    <style>
+        body {
+            background: var(--light);
+        }
+
+        .login-section {
+            padding: 80px 0;
+        }
+
+        .login-box {
+            background: #fff;
+            border-radius: 16px;
+            padding: 40px 32px;
+            max-width: 480px;
+            width: 100%;
+            margin: 0 auto;
+            box-shadow: var(--shadow);
+            position: relative;
+        }
+
+        .login-box::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 6px;
+            width: 100%;
+            background: linear-gradient(90deg, var(--green), var(--beige));
+        }
+
+        .login-input {
+            width: 100%;
+            padding: 16px;
+            border-radius: 10px;
+            border: 2px solid #eee;
+            font-size: 16px;
+            margin-top: 6px;
+        }
+
+        .btn--primary {
+            width: 100%;
+            margin-top: 12px;
+        }
+
+        a {
+            text-decoration: none;
+        }
+    </style>
+
+</head>
+
+<body>
+
+    <!-- ⭐ EXACT NAVBAR FROM index.html -->
+    <header class="nav">
+        <div class="container nav__inner">
+            <a href="/" class="brand">
+                <img src="{% static 'Assets/logo.png' %}" class="brand__logo">
+                <span class="brand__name">HappyTummy Foundation</span>
+            </a>
+
+            <button class="nav__toggle" id="menuToggle">
+                <span class="nav__bar"></span><span class="nav__bar"></span><span class="nav__bar"></span>
+            </button>
+
+            <nav class="nav__links" id="navLinks">
+                <a href="/#about">About</a>
+                <a href="/#how">How It Works</a>
+                <a href="/#impact">Impact</a>
+                <a href="/#involved">Get Involved</a>
+                <a href="/#contact">Contact</a>
+
+                <div class="dropdown nav-dropdown">
+                    <a class="nav-link dropbtn">Dashboard</a>
+
+                    <div class="dropdown-content">
+                        {% if user.is_authenticated %}
+                        <a href="/dashboard/">My Dashboard</a>
+                        <a href="/logout/">Logout</a>
+                        {% else %}
+                        <a href="/restaurant/login/">Restaurant Login</a>
+                        <a href="/volunteer/login/">Volunteer Login</a>
+                        <a href="/ngo/login/">NGO Login</a>
+                        {% endif %}
+                    </div>
+                </div>
+
+            </nav>
+        </div>
+    </header>
+
+    <!-- ⭐ LOGIN BOX -->
+    <section class="pad section login-section">
+        <div class="container">
+
+            <div class="login-box">
+                <h2 class="center" style="font-family:'Playfair Display', serif;">NGO Login</h2>
+                <p class="center" style="margin-bottom:20px;color:#5f6d54;">
+                    Access your distribution dashboard
+                </p>
+
+                {% if error %}
+                <p style="color:#d9534f; text-align:center; margin-bottom:10px;">{{ error }}</p>
+                {% endif %}
+
+                <form method="post">
+                    {% csrf_token %}
+
+                    <label>Username</label>
+                    <input type="text" class="login-input" name="username" placeholder="Enter username" required>
+
+                    <label style="margin-top:16px;">Password</label>
+                    <input type="password" class="login-input" name="password" placeholder="Enter password" required>
+
+                    <button class="btn btn--primary" type="submit">Login</button>
+
+                    <p class="center" style="margin-top:16px;">
+                        New NGO?
+                        <a href="/ngo/register/" style="color:var(--green);">Create Account</a>
+                    </p>
+                </form>
+
+            </div>
+
+        </div>
+    </section>
+
+    <!-- ⭐ NAVBAR JS -->
+    <script>
+        const menuToggle = document.getElementById("menuToggle");
+        const navLinks = document.getElementById("navLinks");
+
+        menuToggle.addEventListener("click", () => {
+            navLinks.classList.toggle("open");
+        });
+
+        document.addEventListener("click", (e) => {
+            if (!menuToggle.contains(e.target) && !navLinks.contains(e.target)) {
+                navLinks.classList.remove("open");
+            }
+        });
+    </script>
+
+</body>
+
+</html>

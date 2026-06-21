@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>New HappyTummy Donation</title>
+</head>
+<body style="margin:0;padding:0;background:#f6f7f2;font-family:Arial,sans-serif;color:#1f2a1f;">
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#f6f7f2;padding:24px 0;">
+        <tr>
+            <td align="center">
+                <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:600px;background:#ffffff;border-radius:8px;overflow:hidden;border:1px solid #e5e8df;">
+                    <tr>
+                        <td style="padding:24px 28px;background:#2f6f3e;color:#ffffff;">
+                            <h1 style="margin:0;font-size:24px;line-height:1.3;">New donation available</h1>
+                            <p style="margin:8px 0 0;font-size:15px;">{{ restaurant_name }} has posted surplus food for NGOs.</p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding:28px;">
+                            <p style="margin:0 0 18px;">Hi {{ ngo.contact_person|default:ngo.name }},</p>
+                            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;">
+                                <tr>
+                                    <td style="padding:10px 0;border-bottom:1px solid #eef0ea;color:#66715f;width:34%;">Donation</td>
+                                    <td style="padding:10px 0;border-bottom:1px solid #eef0ea;font-weight:bold;">{{ food_type }}</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding:10px 0;border-bottom:1px solid #eef0ea;color:#66715f;">Quantity</td>
+                                    <td style="padding:10px 0;border-bottom:1px solid #eef0ea;">{{ quantity }}</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding:10px 0;border-bottom:1px solid #eef0ea;color:#66715f;">Pickup location</td>
+                                    <td style="padding:10px 0;border-bottom:1px solid #eef0ea;">{{ pickup_location }}</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding:10px 0;border-bottom:1px solid #eef0ea;color:#66715f;">Pickup deadline</td>
+                                    <td style="padding:10px 0;border-bottom:1px solid #eef0ea;">
+                                        {% if pickup_deadline %}{{ pickup_deadline|date:"d M Y, h:i A" }}{% else %}Not specified{% endif %}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="padding:10px 0;color:#66715f;">Restaurant</td>
+                                    <td style="padding:10px 0;">{{ restaurant_name }}</td>
+                                </tr>
+                            </table>
+                            <p style="margin:26px 0 0;">
+                                <a href="{{ claim_url }}" style="display:inline-block;background:#2f6f3e;color:#ffffff;text-decoration:none;padding:12px 18px;border-radius:6px;font-weight:bold;">View and claim donation</a>
+                            </p>
+                            <p style="margin:22px 0 0;color:#66715f;font-size:13px;">You are receiving this because your NGO account is active, email verified, and opted in to donation notifications.</p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>

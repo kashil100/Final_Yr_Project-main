@@ -1,0 +1,14 @@
+Hi {{ ngo.contact_person|default:ngo.name }},
+
+A new HappyTummy donation is available to claim.
+
+Donation: {{ food_type }}
+Quantity: {{ quantity }}
+Pickup location: {{ pickup_location }}
+{% if pickup_deadline %}Pickup deadline: {{ pickup_deadline|date:"d M Y, h:i A" }}{% else %}Pickup deadline: Not specified{% endif %}
+Restaurant: {{ restaurant_name }}
+
+View and claim this donation:
+{{ claim_url }}
+
+HappyTummy Foundation

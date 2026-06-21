@@ -1,0 +1,654 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Volunteer Dashboard — HappyTummy</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <link rel="icon" href="{% static 'Assets/logo.png' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { background: #f8f7f3; font-family: 'Poppins', sans-serif; margin: 0; }
+        .dashboard-wrapper { max-width: 1000px; margin: 0 auto; padding: 40px 0 60px; }
+        .card { background: #fff; border-radius: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); padding: 28px 22px; margin-bottom: 28px; }
+        .summary-row { display: flex; flex-wrap: wrap; gap: 24px; margin-bottom: 36px; }
+        .summary-card { flex: 1 1 220px; background: #fff; border-radius: 14px; box-shadow: 0 2px 12px rgba(44,62,80,0.06); padding: 24px 18px; text-align: center; }
+        .summary-card .icon { font-size: 2.2rem; margin-bottom: 8px; }
+        .summary-card .label { font-size: 1.1rem; color: #757575; }
+        .summary-card .value { font-size: 2.1rem; font-weight: 700; color: #2E7D32; }
+        .profile-row { margin-bottom: 28px; }
+        .profile-card { max-width: 560px; background: #fff; border-radius: 14px; box-shadow: 0 2px 12px rgba(44,62,80,0.06); padding: 28px 22px; }.profile-header { display: flex; align-items: center; gap: 18px; margin-bottom: 12px; }
+        .profile-avatar { width: 54px; height: 54px; border-radius: 50%; background: #E8F5E9; display: flex; align-items: center; justify-content: center; font-size: 1.7rem; color: #2E7D32; font-weight: 700; }
+        .profile-header-info { display: flex; flex-direction: column; }
+        .profile-header-info .name { font-size: 1.1rem; font-weight: 600; color: #2E7D32; }
+        .profile-header-info .email { font-size: 0.98rem; color: #666; }
+        .profile-detail { font-size: 1rem; color: #555; margin-bottom: 6px; }
+        .table-wrapper { background: #fff; border-radius: 16px; box-shadow: 0 2px 12px rgba(44,62,80,0.06); padding: 8px 0 4px; overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; min-width: 500px; }
+        th, td { padding: 12px 18px; text-align: left; border-bottom: 1px solid #f1f1f1; font-size: 14px; }
+        th { background: #fafafa; font-weight: 600; color: #555; text-transform: uppercase; font-size: 12px; letter-spacing: 0.5px; }
+        tbody tr:hover { background: #fafafa; }
+        .status-pill { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; }
+        .status-pending { background: #fff3cd; color: #856404; }
+        .status-complete { background: #d4edda; color: #155724; }
+        .status-danger { background: #fdecea; color: #b71c1c; }
+        .status-neutral { background: #eceff1; color: #455a64; }
+       .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .compact-table table { min-width: 100%; }
+        .compact-table th, .compact-table td { white-space: normal; }
+        @media (max-width: 900px) {
+            .dashboard-wrapper { padding: 24px 12px 40px; }
+            .summary-row { gap: 14px; }
+            .summary-card { flex: 1 1 180px; }
+            table { min-width: 0; }
+        }
+        /* Dark mode styles */
+        body.dark-mode {
+            background: #181a1b !important;
+            color: #e0e0e0 !important;
+        }
+        body.dark-mode .dashboard-wrapper,
+        body.dark-mode .card,
+        body.dark-mode .profile-card,
+        body.dark-mode .table-wrapper,
+        body.dark-mode .modal {
+            background: #23272a !important;
+            color: #e0e0e0 !important;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.18);
+        }
+        body.dark-mode .summary-card {
+            background: #23272a !important;
+            color: #e0e0e0 !important;
+        }
+        body.dark-mode th {
+            background: #23272a !important;
+            color: #bdbdbd !important;
+        }
+        body.dark-mode td {
+            color: #e0e0e0 !important;
+        }
+        body.dark-mode .btn-primary {
+            background: #388e3c !important;
+            color: #fff !important;
+        }
+        body.dark-mode .btn-secondary {
+            background: #333 !important;
+            color: #fff !important;
+        }
+        body.dark-mode .modal-backdrop {
+            background: rgba(20,20,20,0.7) !important;
+        }
+        body.dark-mode input,
+        body.dark-mode textarea,
+        body.dark-mode select {
+            background: #23272a !important;
+            color: #e0e0e0 !important;
+            border: 1px solid #444 !important;
+        }
+        body.dark-mode .status-pill.status-complete {
+            background: #2e7d32 !important;
+            color: #fff !important;
+        }
+        body.dark-mode .status-pill.status-pending {
+            background: #bfa800 !important;
+            color: #fff !important;
+        }
+        body.dark-mode .profile-avatar {
+            background: #23272a !important;
+            color: #81c784 !important;
+        }
+        body.dark-mode .modal {
+            background: #23272a !important;
+        }
+        body.dark-mode .modal-header h3 {
+            color: #81c784 !important;
+        }
+        body.dark-mode .modal-close {
+            color: #fff !important;
+        }
+        body.dark-mode .form-label {
+            color: #bdbdbd !important;
+        }
+        body.dark-mode .dashboard-wrapper h1,
+        body.dark-mode .dashboard-wrapper h2,
+        body.dark-mode .dashboard-wrapper h3 {
+            color: #81c784 !important;
+        }
+    </style>
+</head>
+<body>
+    {% include 'partials/navbar.html' %}
+    <div class="dashboard-wrapper">
+        <div class="card" style="margin-bottom:32px;">
+            <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 18px;">
+                <div>
+                    <h1 style="font-size: 2.1rem; color: #2E7D32; margin: 0 0 6px; font-family: 'Playfair Display', serif;">Welcome, {{ profile.full_name }}</h1>
+                    <div style="color: #5f6d54; font-size: 1.08rem;">Manage your food pickups and volunteering tasks.</div>
+                </div>
+                <div style="display: flex; gap: 12px;">
+                    <button class="btn btn--primary" style="font-size: 1rem; padding: 12px 24px;" onclick="openProfileModal()">
+                        <i class="fas fa-user-edit"></i> Edit Profile
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Profile Modal (moved to top for better UX) -->
+        <div class="modal-backdrop" id="profileModal" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(44,62,80,0.18);z-index:1000;align-items:center;justify-content:center;">
+            <div class="modal" style="background:#fff;max-width:400px;width:90vw;margin:auto;border-radius:16px;box-shadow:0 8px 32px rgba(44,62,80,0.18);padding:32px 28px;position:relative;">
+                <div class="modal-header" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;">
+                    <h3 style="margin:0;font-size:1.3rem;color:#2E7D32;">Edit profile</h3>
+                    <button class="modal-close" onclick="closeProfileModal()" style="background:none;border:none;font-size:1.5rem;cursor:pointer;">&times;</button>
+                </div>
+                <form method="POST" action="" id="profileEditForm">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="update_profile">
+                    <div class="form-group" style="margin-bottom:14px;">
+                        <label class="form-label" style="display:block;margin-bottom:4px;">Full Name</label>
+                        <input class="modal-input" name="full_name" value="{{ profile.full_name }}" required style="width:100%;padding:8px 10px;border-radius:6px;border:1px solid #ccc;">
+                    </div>
+                    <div class="form-group" style="margin-bottom:14px;">
+                        <label class="form-label" style="display:block;margin-bottom:4px;">Phone</label>
+                        <input class="modal-input" name="phone" value="{{ profile.phone }}" required style="width:100%;padding:8px 10px;border-radius:6px;border:1px solid #ccc;">
+                    </div>
+                    <div class="form-group" style="margin-bottom:18px;">
+                        <label class="form-label" style="display:block;margin-bottom:4px;">Area</label>
+                        <input class="modal-input" name="area" value="{{ profile.area }}" required style="width:100%;padding:8px 10px;border-radius:6px;border:1px solid #ccc;">
+                    </div>
+                    <div class="modal-footer" style="display:flex;gap:12px;justify-content:flex-end;">
+                        <button type="submit" class="btn-primary" style="padding:8px 22px;font-size:1rem;"><i class="fas fa-save"></i> Save</button>
+                        <button type="button" class="btn-secondary" onclick="closeProfileModal()" style="padding:8px 22px;font-size:1rem;">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <div class="summary-row">
+            <div class="summary-card">
+                <div class="icon" style="color:#2E7D32;"><i class="fas fa-shield-heart"></i></div>
+                <div class="label">Trust Score</div>
+                <div class="value">{{ profile.trust_score }}</div>
+            </div>
+            <div class="summary-card">
+                <div class="icon" style="color:#4CAF50;"><i class="fas fa-hand-holding-heart"></i></div>
+                <div class="label">Total Pickups</div>
+                <div class="value">{{ tasks|length }}</div>
+            </div>
+            <div class="summary-card">
+                <div class="icon" style="color:#FFA000;"><i class="fas fa-truck"></i></div>
+                <div class="label">Pending Tasks</div>
+                <div class="value">{{ pending_count }}</div>
+            </div>
+              <div class="summary-card">
+                <div class="icon" style="color:#1976D2;"><i class="fas fa-route"></i></div>
+                <div class="label">NGOs Served</div>
+                <div class="value">{{ ngo_frequency_count }}</div>
+            </div>
+            <div class="summary-card">
+                <div class="icon" style="color:#6A1B9A;"><i class="fas fa-store"></i></div>
+                <div class="label">Pickup Restaurants</div>
+                <div class="value">{{ restaurant_frequency_count }}</div>
+            </div>
+            <div class="summary-card">
+                <div class="icon" style="color:#D84315;"><i class="fas fa-shield-exclamation"></i></div>
+                <div class="label">Flag Count</div>
+                <div class="value">{{ profile.flag_count }}</div>
+            </div>
+            <div class="summary-card">
+                <div class="icon" style="color:#1565C0;"><i class="fas fa-check-double"></i></div>
+                <div class="label">NGO Confirmations</div>
+                <div class="value">{{ profile.ngo_confirmations }}</div>
+            </div>
+            <div class="summary-card">
+                <div class="icon" style="color:#388E3C;"><i class="fas fa-badge-check"></i></div>
+                <div class="label">Successful Deliveries</div>
+                <div class="value">{{ profile.successful_deliveries }}</div>
+            </div>
+            <div class="summary-card">
+                <div class="icon" style="color:#C62828;"><i class="fas fa-triangle-exclamation"></i></div>
+                <div class="label">Suspicious Deliveries</div>
+                <div class="value">{{ profile.suspicious_deliveries }}</div>
+            </div>
+            <div class="summary-card">
+                <div class="icon" style="color:#8E24AA;"><i class="fas fa-circle-xmark"></i></div>
+                <div class="label">Failed Deliveries</div>
+                <div class="value">{{ profile.failed_deliveries }}</div>
+            </div>
+        </div>
+        <div class="card" style="margin-bottom:24px;">
+            <div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:14px;">
+                <div>
+                    <h2 style="margin:0 0 6px;color:#2E7D32;font-size:1.3rem;">
+                        <i class="fas fa-award"></i> Monthly Certificate Progress ({{ monthly_label }})
+                    </h2>
+                    <p style="margin:0;color:#5f6d54;">
+                        Complete <strong>{{ monthly_target }}</strong> deliveries this month to unlock your volunteer certificate.
+                    </p>
+                </div>
+                {% if monthly_certificate_earned %}
+                <span class="status-pill status-complete" style="font-size:13px;padding:7px 12px;">
+                    <i class="fas fa-certificate"></i> Certificate Unlocked
+                </span>
+                {% else %}
+                <span class="status-pill status-pending" style="font-size:13px;padding:7px 12px;">
+                    <i class="fas fa-hourglass-half"></i> {{ monthly_deliveries_left }} more to unlock
+                </span>
+                {% endif %}
+            </div>
+            <div style="margin-top:14px;">
+                <div style="height:12px;background:#edf2ee;border-radius:999px;overflow:hidden;">
+                    <div style="height:100%;width:{{ monthly_progress_percent }}%;background:#4CAF50;border-radius:999px;"></div>
+                </div>
+                <div style="margin-top:8px;font-size:0.95rem;color:#444;">
+                    {{ monthly_completed_count }} / {{ monthly_target }} deliveries completed.
+                </div>
+                {% if monthly_certificate_earned %}
+                <div style="margin-top:12px;">
+                    <a href="{% url 'volunteer_monthly_certificate' %}" class="btn btn--primary" style="display:inline-flex;align-items:center;gap:8px;padding:10px 16px;">
+                        <i class="fas fa-file-certificate"></i> View Certificate
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+       
+        <div id="liveLocationStatus" style="background:#e8f5e9;color:#1b5e20;border-radius:10px;padding:10px 14px;margin:0 0 18px 0;font-size:0.95rem;">
+            Live location updates are enabled while you have active deliveries.
+        </div>
+        {% if page_message %}
+        <div style="background:{% if page_message_type == 'error' %}#fdecea{% else %}#e8f5e9{% endif %};color:{% if page_message_type == 'error' %}#b71c1c{% else %}#1b5e20{% endif %};border-left:4px solid {% if page_message_type == 'error' %}#e53935{% else %}#2E7D32{% endif %};border-radius:10px;padding:12px 14px;margin:0 0 18px 0;font-size:0.95rem;font-weight:600;">
+            {{ page_message }}
+        </div>
+        {% endif %}
+        <div class="profile-row">
+            <div class="profile-card">
+                <div class="profile-header">
+                    {% if profile.profile_photo %}
+                        <img src="{{ profile.profile_photo.url }}" alt="Profile Photo" class="profile-avatar" style="object-fit:cover; width:54px; height:54px; border-radius:50%; border:2px solid #4CAF50;">
+                    {% else %}
+                        <div class="profile-avatar">{{ profile.full_name|first|upper }}</div>
+                    {% endif %}
+                    <div class="profile-header-info">
+                        <div class="name">{{ profile.full_name }}</div>
+                        <div class="email">{{ profile.user.email }}</div>
+                    </div>
+                </div>
+                <div class="profile-detail"><i class="fas fa-phone-alt" style="color:#4CAF50;margin-right:6px;"></i>{{ profile.phone }}</div>
+                <div class="profile-detail"><i class="fas fa-map-marker-alt" style="color:#FFA000;margin-right:6px;"></i>{{ profile.area }}</div>
+                <div class="profile-detail"><i class="fas fa-shield-heart" style="color:#2E7D32;margin-right:6px;"></i>Trust score: {{ profile.trust_score }}</div>
+                <div class="profile-detail"><i class="fas fa-shield-exclamation" style="color:#D84315;margin-right:6px;"></i>Flags on account: {{ profile.flag_count }}</div>
+                <div class="profile-detail">
+                    <i class="fas fa-user-shield" style="color:#1976D2;margin-right:6px;"></i>
+                    Account status:
+                    <span class="status-pill status-{{ trust_status_tone }}">{{ profile.trust_status_label }}</span>
+                </div>
+            </div>
+        </div>
+        <div class="card" style="margin-bottom:24px;">
+            <div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:14px;">
+                <div>
+                    <h2 style="margin:0 0 6px;color:#2E7D32;font-size:1.3rem;">
+                        <i class="fas fa-user-shield"></i> Delivery Credibility
+                    </h2>
+                    <p style="margin:0;color:#5f6d54;">
+                        {{ profile.trust_status_label }}. Delivery visibility is adjusted automatically based on your trust score.
+                    </p>
+                </div>
+                {% if delivery_visibility_limit %}
+                <span class="status-pill status-pending" style="font-size:13px;padding:7px 12px;">
+                    <i class="fas fa-filter"></i> Showing up to {{ delivery_visibility_limit }} nearby deliveries
+                </span>
+                {% else %}
+                <span class="status-pill status-complete" style="font-size:13px;padding:7px 12px;">
+                    <i class="fas fa-map-location-dot"></i> Full delivery visibility enabled
+                </span>
+                {% endif %}
+            </div>
+        </div>
+        <h2 class="section-title" style="font-size:1.3rem;color:#2E7D32;margin:32px 0 18px;font-family:'Playfair Display',serif;">
+            <i class="fas fa-truck"></i> Available Pickups in {{ volunteer_city }}
+        </h2>
+        <div class="table-wrapper" style="margin-bottom:32px;">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Restaurant</th>
+                        <th>Food Type</th>
+                        <th>Quantity</th>
+                        <th>Restaurant Address</th>
+                        <th>NGO Address</th>
+                        <th>Posted At</th>
+                        <th>Food Safety</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for pickup in available_pickups %}
+                    <tr>
+                        {% if pickup.request %}
+                            <td>{{ pickup.request.restaurant.business_name }}</td>
+                            <td>{{ pickup.request.food_type }}</td>
+                            <td>{{ pickup.request.quantity }} meals</td>
+                            <td>{{ pickup.request.restaurant.address }}</td>
+                            <td>{{ pickup.destination_address }}</td>
+                            <td>{{ pickup.request.timestamp|date:"M d, Y — h:i A" }}</td>
+                            <td>
+                                <span class="status-pill {{ pickup.request.safety_badge_class }}">
+                                    <i class="fas {{ pickup.request.safety_icon }}"></i> {{ pickup.request.safety_status }}
+                                </span>
+                                <div style="margin-top:6px;font-size:12px;color:#666;">
+                                    Expires: {{ pickup.request.expiry_at|date:"M d, Y h:i A"|default:"Not set" }}
+                                </div>
+                            </td>
+                        {% else %}
+                            <td>{% if pickup.ngo_request.accepted_by %}{{ pickup.ngo_request.accepted_by.business_name }}{% else %}-{% endif %}</td>
+                            <td>{{ pickup.ngo_request.food_type }}</td>
+                            <td>{{ pickup.ngo_request.quantity }} meals</td>
+                            <td>{% if pickup.ngo_request.accepted_by %}{{ pickup.ngo_request.accepted_by.address }}{% else %}-{% endif %}</td>
+                            <td>{{ pickup.ngo_request.ngo.address }}</td>
+                            <td>{{ pickup.ngo_request.timestamp|date:"M d, Y — h:i A" }}</td>
+                            <td><span style="color:#777;font-size:13px;">Not required</span></td>
+                        {% endif %}
+                        <td>
+                            <form method="post" style="display:inline;">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="accept_pickup">
+                                <input type="hidden" name="pickup_id" value="{{ pickup.id }}">
+                                <button type="submit" class="btn btn-primary" style="padding:6px 18px;font-size:13px;">Accept</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="8" style="text-align:center; padding: 24px; color:#777;">No pickups available in your area.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+         <h2 class="section-title" style="font-size:1.3rem;color:#2E7D32;margin:10px 0 18px;font-family:'Playfair Display',serif;">
+            <i class="fas fa-chart-bar"></i> Delivery Frequency Statistics
+        </h2>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:16px;margin-bottom:28px;">
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>NGO</th>
+                            <th>Completed Deliveries</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for ngo in ngo_frequency %}
+                        <tr>
+                            <td>{{ ngo.name }}</td>
+                            <td>{{ ngo.count }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="2" style="text-align:center; padding: 18px; color:#777;">
+                                No NGO delivery stats yet.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Restaurant</th>
+                            <th>Completed Pickups</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for restaurant in restaurant_frequency %}
+                        <tr>
+                            <td>{{ restaurant.name }}</td>
+                            <td>{{ restaurant.count }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="2" style="text-align:center; padding: 18px; color:#777;">
+                                No restaurant pickup stats yet.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <h2 class="section-title" style="font-size:1.3rem;color:#2E7D32;margin:32px 0 18px;font-family:'Playfair Display',serif;">
+            <i class="fas fa-tasks"></i> Assigned Pickup Tasks
+        </h2>
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Food Type</th>
+                        <th>Quantity</th>
+                        <th>Restaurant</th>
+                        <th>Restaurant Address</th>
+                        <th>NGO Address</th>
+                        <th>Date Assigned</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for task in tasks %}
+                    <tr>
+                        {% if task.request %}
+                            <td>{{ task.request.food_type }}</td>
+                            <td>{{ task.request.quantity }} meals</td>
+                            <td>{{ task.request.restaurant.business_name }}</td>
+                             <td>{{ task.source_address_display }}</td>
+                            <td>{{ task.destination_address_display }}</td>
+                            <td>{{ task.assigned_at|date:"M d, Y — h:i A" }}</td>
+                        {% else %}
+                            <td>{{ task.ngo_request.food_type }}</td>
+                            <td>{{ task.ngo_request.quantity }} meals</td>
+                            <td>{% if task.ngo_request.accepted_by %}{{ task.ngo_request.accepted_by.business_name }}{% else %}-{% endif %}</td>
+                            <td>{{ task.source_address_display }}</td>
+                            <td>{{ task.destination_address_display }}</td>
+                            <td>{{ task.assigned_at|date:"M d, Y — h:i A" }}</td>
+                        {% endif %}
+                        <td>
+                            {% if task.completed %}
+                            <span class="status-pill status-complete"><i class="fas fa-check"></i> Reached</span>
+                            {% elif task.status == "suspicious" %}
+                            <span class="status-pill status-danger"><i class="fas fa-triangle-exclamation"></i> Suspicious</span>
+                            {% elif task.status == "failed" %}
+                            <span class="status-pill status-danger"><i class="fas fa-circle-xmark"></i> Failed</span>
+                            {% elif task.delivered_to_ngo %}
+                            <span class="status-pill status-complete"><i class="fas fa-box-open"></i> Delivered Order</span>
+                            {% else %}
+                            <span class="status-pill status-pending"><i class="fas fa-clock"></i> Pending Delivery</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if not task.completed and not task.delivered_to_ngo %}
+                            <form method="post" enctype="multipart/form-data" style="display:inline;">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="complete_pickup">
+                                <input type="hidden" name="pickup_id" value="{{ task.id }}">
+                                <input type="text" name="delivery_otp" placeholder="Enter OTP" maxlength="6" inputmode="numeric" pattern="[0-9]{6}" required style="width:110px;padding:6px 8px;border-radius:6px;border:1px solid #ccc;margin-right:8px;">
+                                <input type="file" name="delivery_proof" accept="image/*" style="display:block;margin-top:8px;">
+                                <button type="submit" class="btn btn-primary" style="padding:6px 18px;font-size:13px;">Mark Delivered</button>
+                                <div style="font-size:12px;color:#777;margin-top:6px;">
+                                    Ask the NGO for the 6-digit OTP before marking delivery. You can also upload an optional proof photo.
+                                </div>
+                            </form>
+                            {% elif task.delivered_to_ngo and not task.completed %}
+                            <span style="color:#777;font-size:13px;">Waiting for NGO confirmation</span>
+                            {% endif %}
+                            {% if task.delivery_proof_image %}
+                            <div style="font-size:12px;color:#2E7D32;margin-top:6px;">
+                                <i class="fas fa-camera"></i> Proof uploaded{% if task.proof_uploaded_at %} on {{ task.proof_uploaded_at|date:"M d, Y h:i A" }}{% endif %}
+                            </div>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="8" style="text-align:center; padding: 24px; color:#777;">No pickup tasks assigned yet.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <h2 class="section-title" style="font-size:1.3rem;color:#2E7D32;margin:32px 0 18px;font-family:'Playfair Display',serif;">
+            <i class="fas fa-clock-rotate-left"></i> Trust Score History
+        </h2>
+        <div class="table-wrapper" style="margin-bottom:28px;">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Timestamp</th>
+                        <th>Score Change</th>
+                        <th>Reason</th>
+                        <th>Delivery</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for log in trust_logs %}
+                    <tr>
+                        <td>{{ log.created_at|date:"M d, Y — h:i A" }}</td>
+                        <td>
+                            <span class="status-pill {% if log.score_change >= 0 %}status-complete{% else %}status-danger{% endif %}">
+                                {% if log.score_change >= 0 %}+{% endif %}{{ log.score_change }}
+                            </span>
+                        </td>
+                        <td>{{ log.reason }}</td>
+                        <td>{% if log.pickup_task %}Task #{{ log.pickup_task.id }}{% else %}-{% endif %}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="4" style="text-align:center; padding: 24px; color:#777;">No trust score activity yet.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <!-- Profile Modal (optional, for parity) -->
+        <div class="modal-backdrop" id="profileModal" style="display:none;">
+            <div class="modal">
+                <div class="modal-header">
+                    <h3>Edit profile</h3>
+                    <button class="modal-close" onclick="closeProfileModal()">&times;</button>
+                </div>
+                <form method="POST" action="" id="profileEditForm">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="update_profile">
+                    <div class="form-group">
+                        <label class="form-label">Full Name</label>
+                        <input class="modal-input" name="full_name" value="{{ profile.full_name }}" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Phone</label>
+                        <input class="modal-input" name="phone" value="{{ profile.phone }}" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Area</label>
+                        <input class="modal-input" name="area" value="{{ profile.area }}" required>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="submit" class="btn-primary"><i class="fas fa-save"></i> Save</button>
+                        <button type="button" class="btn-secondary" onclick="closeProfileModal()">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <script>
+            const HAS_ACTIVE_TASK = {{ has_active_task|yesno:"true,false" }};
+
+            function openProfileModal() {
+                console.log('openProfileModal called');
+                document.getElementById("profileModal").style.display = "flex";
+            }
+            function closeProfileModal() {
+                document.getElementById("profileModal").style.display = "none";
+            }
+            document.querySelectorAll('.modal-backdrop').forEach(backdrop => {
+                backdrop.addEventListener('click', function (e) {
+                    if (e.target === this) {
+                        this.style.display = 'none';
+                    }
+                });
+            });
+            document.addEventListener('keydown', function (e) {
+                if (e.key === 'Escape') {
+                    closeProfileModal();
+                }
+            });
+
+            document.addEventListener('DOMContentLoaded', function () {
+                const locationStatus = document.getElementById("liveLocationStatus");
+
+                function getCookie(name) {
+                    const value = `; ${document.cookie}`;
+                    const parts = value.split(`; ${name}=`);
+                    if (parts.length === 2) {
+                        return parts.pop().split(';').shift();
+                    }
+                    return "";
+                }
+
+                async function pushLiveLocation(lat, lng) {
+                    const body = new URLSearchParams({ lat: String(lat), lng: String(lng) });
+                    const response = await fetch("/api/volunteer/location/update/", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/x-www-form-urlencoded",
+                            "X-CSRFToken": getCookie("csrftoken")
+                        },
+                        body
+                    });
+                    if (!response.ok) {
+                        throw new Error("Failed to send location update.");
+                    }
+                }
+
+                function runLocationUpdate() {
+                    if (!navigator.geolocation) {
+                        locationStatus.textContent = "Your browser does not support live location sharing.";
+                        return;
+                    }
+                    navigator.geolocation.getCurrentPosition(
+                        async function (position) {
+                            try {
+                                await pushLiveLocation(position.coords.latitude, position.coords.longitude);
+                                const now = new Date().toLocaleTimeString();
+                                locationStatus.textContent = `Live location synced at ${now}.`;
+                            } catch (error) {
+                                locationStatus.textContent = "Could not sync live location to server.";
+                            }
+                        },
+                        function () {
+                            locationStatus.textContent = "Location permission denied. Enable location to share live updates.";
+                        },
+                        {
+                            enableHighAccuracy: true,
+                            timeout: 10000,
+                            maximumAge: 5000,
+                        }
+                    );
+                }
+
+                if (HAS_ACTIVE_TASK) {
+                    runLocationUpdate();
+                    setInterval(runLocationUpdate, 10000);
+                } else {
+                    locationStatus.textContent = "No active delivery. Live location sharing will start when a task is assigned.";
+                }
+            });
+        </script>
+    </div>
+</body>
+</html>

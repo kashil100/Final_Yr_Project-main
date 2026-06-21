@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+{% load static %}
+
+<head>
+    <meta charset="utf-8" />
+    <title>HappyTummy Foundation — Turning Surplus Food into Hope</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#7BA46C" />
+    <link rel="icon" href="{% static 'Assets/logo.png' %}" type="image/png" />
+       <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&family=Playfair+Display:wght@600;700&display=swap"
+        rel="stylesheet">
+
+    <link rel="stylesheet" href="{% static 'css/style.css' %}" />
+</head>
+
+<body>
+    {% include 'partials/navbar.html' %}
+
+    <section id="home" class="hero">
+        <div class="hero__bg"></div>
+        <div class="hero__overlay"></div>
+        <div class="container hero__content reveal fade-up">
+            <h1 class="hero__title">Turning Surplus Food into <span class="hl">Hope</span></h1>
+            <p class="hero__subtitle">We bridge restaurants and community kitchens with local NGOs to deliver safe,
+                surplus meals to people in need — before good food goes to waste.</p>
+            <div class="hero__ctas">
+                <a class="btn btn--primary" href="#involved">Partner with Us</a>
+                <a class="btn btn--ghost" href="#about">Learn more</a>
+            </div>
+        </div>
+    </section>
+
+    <section id="about" class="pad section">
+        <div class="container grid grid--2 reveal fade">
+            <div>
+                <h2 class="title">Who we are</h2>
+                <p class="lead">HappyTummy Foundation is a food-redistribution initiative inspired by organizations like
+                    FoodBox Foundation. We help restaurants, caterers, and home kitchens donate their extra, safe-to-eat
+                    food to verified NGOs, shelters, and community groups — quickly and transparently.</p>
+                <p>Our model reduces food waste, lowers carbon impact, and supports vulnerable communities. With a
+                    caring network of partners and volunteers, we ensure surplus meals reach plates — not landfills.</p>
+                <div class="about__tags">
+                    <span class="tag">Food Rescue</span>
+                    <span class="tag">Zero Waste</span>
+                    <span class="tag">Community First</span>
+                    <span class="tag">Safe & Timely</span>
+                </div>
+            </div>
+            <div class="about__card">
+                <div class="about__photo"></div>
+                <p class="about__caption">Care. Dignity. Nourishment.</p>
+            </div>
+        </div>
+    </section>
+
+    <section id="how" class="pad section section--tint">
+        <div class="container">
+            <h2 class="title center reveal fade">How it works</h2>
+            <p class="center subtext reveal fade">Simple steps to move food from surplus to smiles.</p>
+            <div class="grid grid--3 steps">
+                <div class="card step reveal slide-up delay-0">
+                    <div class="step__icon">🥗</div>
+                    <h3>Collect</h3>
+                    <p>Restaurants, kitchens, and events flag safe surplus food before it expires.</p>
+                </div>
+                <div class="card step reveal slide-up delay-1">
+                    <div class="step__icon">🤝</div>
+                    <h3>Connect</h3>
+                    <p>We coordinate pickups with NGOs and community groups closest to the source.</p>
+                </div>
+                <div class="card step reveal slide-up delay-2">
+                    <div class="step__icon">🍽️</div>
+                    <h3>Serve</h3>
+                    <p>Meals reach people in need fast, safely, and with dignity — the same day.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="impact" class="pad section">
+        <div class="container">
+            <h2 class="title center reveal fade">Our impact</h2>
+            <p class="center subtext reveal fade">Every number below represents a shared meal and a smiling face.</p>
+            <div class="grid grid--3 counters">
+                <div class="card counter reveal slide-up delay-0">
+                    <span class="counter__num" data-target="25000">0</span>
+                    <span class="counter__label">Meals Served</span>
+                </div>
+                <div class="card counter reveal slide-up delay-1">
+                    <span class="counter__num" data-target="120">0</span>
+                    <span class="counter__label">NGO Partners</span>
+                </div>
+                <div class="card counter reveal slide-up delay-2">
+                    <span class="counter__num" data-target="180">0</span>
+                    <span class="counter__label">Donor Kitchens</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="recent-donations" class="pad section section--tint">
+        <div class="container">
+            <h2 class="title center reveal fade">Recent Donations</h2>
+            <p class="center subtext reveal fade">
+                Fresh contributions from our restaurant partners, shared with love and care.
+            </p>
+
+            <div id="donationList" class="grid grid--3">
+                <!-- Donation cards will be inserted dynamically by JavaScript -->
+            </div>
+        </div>
+    </section>
+
+    <section id="stories" class="pad section section--tint">
+        <div class="container">
+            <h2 class="title center reveal fade">Stories of Change</h2>
+            <p class="center subtext reveal fade">
+                Real stories from those who cook, care, and receive — together creating a hunger-free community.
+            </p>
+
+            <div class="grid grid--3 stories">
+                <div class="story-card reveal slide-up delay-0">
+                    <img src="https://thumbs.dreamstime.com/b/restaurant-owner-standing-partner-garden-restaurant-owner-standing-partner-99854497.jpg"
+                        alt="Restaurant Partner" class="story-img" />
+                    <div class="story-content">
+                        <h4 class="story-name">Arjun Mehta</h4>
+                        <p class="story-role">Restaurant Partner</p>
+                        <p class="story-quote">
+                            “HappyTummy made donating our unsold meals effortless. Knowing they reach people the same
+                            night warms our hearts.”
+                        </p>
+                    </div>
+                </div>
+
+                <div class="story-card reveal slide-up delay-1">
+                    <img src="{% static 'Assets/group-different-people-volunteering-foodbank.jpg' %}"
+                        alt="NGO Volunteer" class="story-img" />
+                    <div class="story-content">
+                        <h4 class="story-name">Riya Sharma</h4>
+                        <p class="story-role">NGO Volunteer</p>
+                        <p class="story-quote">
+                            “We serve hundreds of people each week. The rescued food arrives fresh, safe, and timely —
+                            every meal counts.”
+                        </p>
+                    </div>
+                </div>
+
+                <div class="story-card reveal slide-up delay-2">
+                    <img src="https://media.gettyimages.com/id/589544922/photo/doing-business-with-his-brain.jpg?s=612x612&w=0&k=20&c=5WdQs54XbpQI6kd0uFFe5aLJ44QH3DpDEmBda20u60A="
+                        alt="Community Member" class="story-img" />
+                    <div class="story-content">
+                        <h4 class="story-name">Vikram Das</h4>
+                        <p class="story-role">Community Member</p>
+                        <p class="story-quote">
+                            “It feels good to eat warm meals again — not leftovers, but food shared with love and
+                            dignity. Thank you.”
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="involved" class="pad section section--tint">
+        <div class="container reveal fade">
+            <h2 class="title center">Get Involved</h2>
+            <p class="center subtext">
+                Join us in reducing food waste and feeding thousands every day. Choose your role.
+            </p>
+
+            <div class="grid grid--3 involved-forms">
+
+                <!-- ==========================
+                 1. RESTAURANT PARTNER LINK
+            =========================== -->
+                <div class="form-card">
+                    <h3 class="form-title">Register Your Restaurant</h3>
+                    <p class="form-subtext">
+                        Restaurants & caterers — donate surplus meals daily.
+                    </p>
+                    <a href="/restaurant/register/" class="btn btn--primary" style="margin-top: 1em;">Go to Restaurant Registration</a>
+                </div>
+
+
+
+                <!-- ==========================
+                 2. NGO REGISTRATION LINK
+            =========================== -->
+                <div class="form-card">
+                    <h3 class="form-title">Register as an NGO</h3>
+                    <p class="form-subtext">
+                        NGOs helping distribute food to poor & homeless beneficiaries.
+                    </p>
+                    <a href="/ngo/register/" class="btn btn--primary" style="margin-top: 1em;">Go to NGO Registration</a>
+                </div>
+
+
+                <!-- ==========================
+                 3. VOLUNTEER REGISTRATION LINK
+            =========================== -->
+                <div class="form-card">
+                    <h3 class="form-title">Volunteer with Us</h3>
+                    <p class="form-subtext">
+                        Help in food collection, delivery, or awareness programs.
+                    </p>
+                    <a href="/volunteer/register/" class="btn btn--primary" style="margin-top: 1em;">Go to Volunteer Registration</a>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <section id="contact" class="contact-strip">
+        <div class="container contact-strip__inner reveal fade">
+            <h3>Contact us</h3>
+            <p>For partnerships & general queries</p>
+            <div class="contact-strip__links">
+                <a href="mailto:hello@happytummy.org" class="chip">hello@happytummy.org</a>
+                <a href="tel:+911234567890" class="chip">+91 1234567890</a>
+            </div>
+        </div>
+    </section>
+
+    <footer class="footer">
+        <div class="container footer__grid">
+            <div class="footer__brand">
+                <img src="{% static 'Assets/logo.png' %}" alt="HappyTummy Logo" class="footer__logo" />
+                <p>Reducing waste. Feeding people. Nourishing hope.</p>
+            </div>
+            <div>
+                <h4>Quick Links</h4>
+                <ul class="list">
+                    <li><a href="#home">Home</a></li>
+                    <li><a href="#how">How It Works</a></li>
+                    <li><a href="#impact">Impact</a></li>
+                    <li><a href="#involved">Get Involved</a></li>
+                </ul>
+            </div>
+            <div>
+                     <i class="fab fa-instagram"></i>
+                    </a>
+                    <a aria-label="Facebook" href="#" class="social social--facebook">
+                        <i class="fab fa-facebook-f"></i>
+                    </a>
+                    <a aria-label="LinkedIn" href="#" class="social social--linkedin">
+                        <i class="fab fa-linkedin-in"></i>
+                    </a>
+            </div>
+        </div>
+        <div class="container footer__note">
+            <small>© <span id="year"></span> HappyTummy Foundation. All rights reserved.</small>
+        </div>
+    </footer>
+
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const themeBtn = document.getElementById('themeToggleBtn');
+            function setTheme(dark) {
+                if (dark) {
+                    document.body.classList.add('dark-mode');
+                    themeBtn.innerHTML = '<i class="fas fa-sun"></i> Light Mode';
+                    themeBtn.style.background = '#23272a';
+                    themeBtn.style.color = '#fff';
+                } else {
+                    document.body.classList.remove('dark-mode');
+                    themeBtn.innerHTML = '<i class="fas fa-moon"></i> Dark Mode';
+                    themeBtn.style.background = '#eee';
+                    themeBtn.style.color = '#222';
+                }
+            }
+            let dark = localStorage.getItem('theme') === 'dark';
+            setTheme(dark);
+            if (themeBtn) {
+                themeBtn.addEventListener('click', function () {
+                    dark = !dark;
+                    setTheme(dark);
+                    localStorage.setItem('theme', dark ? 'dark' : 'light');
+                });
+            }
+        });
+    </script>
+    
+    <script src="{% static 'js/script.js' %}"></script>
+</body>
+
+</html>

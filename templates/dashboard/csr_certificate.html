@@ -1,0 +1,119 @@
+{% load tz %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CSR Certificate - {{ profile.business_name }}</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: "Georgia", "Times New Roman", serif;
+            background: #f2f6f3;
+            color: #1f3c2b;
+        }
+        .certificate-wrap {
+            max-width: 980px;
+            margin: 30px auto;
+            background: #ffffff;
+            border: 12px solid #2e7d32;
+            border-radius: 14px;
+            padding: 48px 42px;
+            box-shadow: 0 8px 26px rgba(21, 60, 40, 0.2);
+            text-align: center;
+        }
+        .title {
+            font-size: 42px;
+            margin: 0 0 8px;
+            color: #1b5e20;
+            letter-spacing: 1px;
+        }
+        .subtitle {
+            font-size: 20px;
+            margin: 0 0 32px;
+            color: #2f5d43;
+        }
+        .recipient {
+            font-size: 36px;
+            margin: 12px 0;
+            color: #0f3d1d;
+        }
+        .details {
+            font-size: 20px;
+            line-height: 1.7;
+            max-width: 760px;
+            margin: 0 auto 26px;
+        }
+        .meta {
+            display: flex;
+            justify-content: space-between;
+            gap: 16px;
+            margin-top: 34px;
+            font-size: 16px;
+            color: #355c44;
+            flex-wrap: wrap;
+        }
+        .actions {
+            text-align: center;
+            margin: 18px 0 26px;
+        }
+        .btn {
+            display: inline-block;
+            text-decoration: none;
+            border: none;
+            border-radius: 999px;
+            padding: 10px 18px;
+            cursor: pointer;
+            font-size: 14px;
+            margin: 0 6px;
+        }
+        .btn-primary {
+            background: #2e7d32;
+            color: #fff;
+        }
+        .btn-light {
+            background: #dfe9e2;
+            color: #234430;
+        }
+        @media print {
+            body {
+                background: #fff;
+            }
+            .actions {
+                display: none;
+            }
+            .certificate-wrap {
+                margin: 0;
+                box-shadow: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="actions">
+        <button class="btn btn-primary" onclick="window.print()">Print / Save as PDF</button>
+        <a class="btn btn-light" href="{% url 'restaurant_dashboard' %}">Back to Dashboard</a>
+    </div>
+
+    <div class="certificate-wrap">
+        <h1 class="title">Certificate of CSR Recognition</h1>
+        <p class="subtitle">Issued by HappyTummy Food Redistribution Network</p>
+
+        <p>This certificate is proudly presented to</p>
+        <h2 class="recipient">{{ profile.business_name }}</h2>
+
+        <p class="details">
+            in recognition of outstanding Corporate Social Responsibility (CSR) contribution
+            during <strong>{{ csr_month_label }}</strong>. With <strong>{{ completed_donations }}</strong>
+            successful delivery{{ completed_donations|pluralize }}, your organization has helped
+            reduce food waste and support communities in need this month.
+        </p>
+
+        <div class="meta">
+            <span><strong>Certificate ID:</strong> {{ certificate_id }}</span>
+            <span><strong>Issued on:</strong> {{ issued_on|localtime|date:"M d, Y" }}</span>
+            <span><strong>Eligibility threshold:</strong> {{ csr_certificate_threshold }} completed deliveries in {{ csr_month_label }}</span>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,1365 @@
+{% load static tz %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Restaurant Dashboard — HappyTummy</title>
+
+    <!-- Main site styles -->
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <link rel="stylesheet" href="{% static 'css/theme.css' %}">
+    <link rel="icon" href="{% static 'Assets/logo.png' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <script>
+        (function () {
+            try {
+                var savedTheme = localStorage.getItem("theme");
+                if (savedTheme === "dark") {
+                    document.documentElement.classList.add("dark-mode");
+                    document.documentElement.setAttribute("data-theme", "dark");
+                }
+            } catch (error) {}
+        })();
+    </script>
+
+    <!-- Leaflet (for map) -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+    <style>
+        :root {
+            --green: #4CAF50;
+            --green-deep: #2E7D32;
+            --green-light: #E8F5E9;
+            --shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            --transition: all 0.25s ease;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            background: var(--ht-bg);
+            color: var(--ht-text);
+            font-family: 'Poppins', sans-serif;
+            margin: 0;
+        }
+
+        .restaurant-dashboard-page {
+            background: var(--ht-bg);
+            color: var(--ht-text);
+        }
+
+        .dashboard-wrapper {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 32px 16px 48px;
+        }
+
+        .dash-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .dash-title-block h1 {
+            font-size: 26px;
+            color: var(--green-deep);
+            margin: 0;
+        }
+
+        .dash-title-block p {
+            margin-top: 6px;
+            color: #666;
+            font-size: 14px;
+        }
+
+        .dash-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .btn-primary,
+        .btn-secondary {
+            border-radius: 999px;
+            padding: 10px 18px;
+            font-size: 14px;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+            transition: var(--transition);
+        }
+
+        .btn-primary {
+            background: var(--green);
+            color: #fff;
+        }
+
+        .btn-primary:hover {
+            background: var(--green-deep);
+            transform: translateY(-1px);
+            box-shadow: 0 6px 15px rgba(76, 175, 80, 0.25);
+        }
+
+        .btn-secondary {
+            background: #eceff1;
+            color: #37474f;
+        }
+
+        .btn-secondary:hover {
+            background: #dde3e7;
+            transform: translateY(-1px);
+        }
+
+        /* Summary cards */
+        .cards-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 18px;
+            margin-bottom: 26px;
+        }
+
+        .card {
+            background: #fff;
+            padding: 20px 18px;
+            border-radius: 16px;
+            box-shadow: var(--shadow);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card::after {
+            content: "";
+            position: absolute;
+            right: -40px;
+            top: -40px;
+            width: 110px;
+            height: 110px;
+            background: radial-gradient(circle at center,
+                    rgba(76, 175, 80, 0.18) 0,
+                    transparent 65%);
+        }
+
+        .card-icon {
+            font-size: 26px;
+            color: var(--green);
+            margin-bottom: 10px;
+        }
+
+        .card-title {
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.7px;
+            color: #757575;
+            margin-bottom: 4px;
+        }
+
+        .card-number {
+            font-size: 30px;
+            font-weight: 800;
+            color: var(--green-deep);
+        }
+
+        .card-sub {
+            font-size: 12px;
+            color: #9e9e9e;
+            margin-top: 4px;
+        }
+
+        .section-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--green-deep);
+            margin: 24px 0 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .section-title i {
+            color: var(--green);
+        }
+
+        /* Profile snapshot */
+        .profile-row {
+            display: grid;
+            grid-template-columns: 2fr 1.5fr;
+            gap: 18px;
+            margin-top: 10px;
+            margin-bottom: 26px;
+        }
+
+        .profile-card {
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: var(--shadow);
+            padding: 18px 18px 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .profile-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 6px;
+        }
+
+        .profile-avatar {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            background: var(--green-light);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            color: var(--green-deep);
+            font-size: 18px;
+        }
+
+        .profile-header h3 {
+            margin: 0;
+            font-size: 16px;
+            color: var(--green-deep);
+        }
+
+        .profile-header span {
+            display: block;
+            font-size: 12px;
+            color: #777;
+        }
+
+        .profile-details-row {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 10px;
+            margin-top: 6px;
+        }
+
+        .profile-detail-item {
+            font-size: 13px;
+            color: #555;
+            display: flex;
+            gap: 6px;
+            align-items: flex-start;
+        }
+
+        .profile-detail-item i {
+            margin-top: 2px;
+            color: var(--green);
+            font-size: 13px;
+            min-width: 14px;
+        }
+
+        /* Map card */
+        .map-card {
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: var(--shadow);
+            padding: 14px 14px 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        #restaurantMap {
+            width: 100%;
+            height: 190px;
+            border-radius: 14px;
+            overflow: hidden;
+        }
+
+        .map-caption {
+            font-size: 12px;
+            color: #777;
+        }
+
+        /* Table */
+        .table-wrapper {
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: var(--shadow);
+            padding: 8px 0 4px;
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 500px;
+        }
+
+        th,
+        td {
+            padding: 12px 18px;
+            text-align: left;
+            border-bottom: 1px solid #f1f1f1;
+            font-size: 14px;
+        }
+
+        th {
+            background: #fafafa;
+            font-weight: 600;
+            color: #555;
+            text-transform: uppercase;
+            font-size: 12px;
+            letter-spacing: 0.5px;
+        }
+
+        tbody tr:hover {
+            background: #fafafa;
+        }
+
+        .status-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 10px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .status-pending {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .status-complete {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-danger {
+            background: #fdecea;
+            color: #b71c1c;
+        }
+
+        .status-neutral {
+            background: #eceff1;
+            color: #455a64;
+        }
+
+        /* Chart card */
+        .chart-card {
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: var(--shadow);
+            margin-top: 26px;
+            padding: 20px 18px 24px;
+        }
+
+        /* Modals */
+        .modal-backdrop {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.45);
+            backdrop-filter: blur(3px);
+            z-index: 999;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal {
+            background: #fff;
+            border-radius: 18px;
+            box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
+            max-width: 420px;
+            width: 92%;
+            padding: 22px 20px 20px;
+            animation: slideIn 0.25s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-16px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 14px;
+        }
+
+        .modal-header h3 {
+            margin: 0;
+            font-size: 18px;
+            color: var(--green-deep);
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 22px;
+            color: #9e9e9e;
+            cursor: pointer;
+            padding: 0;
+        }
+
+        .form-group {
+            margin-bottom: 14px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: #555;
+            margin-bottom: 4px;
+        }
+
+        .modal-input,
+        .modal-textarea {
+            width: 100%;
+            padding: 10px 11px;
+            font-size: 14px;
+            border-radius: 9px;
+            border: 1px solid #d0d7de;
+            outline: none;
+            transition: var(--transition);
+            font-family: inherit;
+        }
+
+        .modal-input:focus,
+        .modal-textarea:focus {
+            border-color: var(--green);
+            box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.15);
+        }
+
+        .modal-textarea {
+            resize: vertical;
+            min-height: 70px;
+        }
+
+        .modal-footer {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .modal-footer .btn-primary,
+        .modal-footer .btn-secondary {
+            flex: 1;
+            justify-content: center;
+        }
+
+        .restaurant-dashboard-shell {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 40px 0 60px;
+        }
+
+        .restaurant-flash-message {
+            margin: 0 auto 18px;
+            padding: 14px 18px;
+            border-radius: 12px;
+            max-width: 900px;
+            border: 1px solid var(--ht-border);
+            box-shadow: var(--ht-shadow-sm);
+        }
+
+        .restaurant-error-card,
+        .restaurant-hero,
+        .restaurant-stat-card,
+        .restaurant-certificate-card,
+        .restaurant-panel {
+            background: var(--ht-surface-raised);
+            color: var(--ht-text);
+            border: 1px solid var(--ht-border);
+            box-shadow: var(--ht-shadow-md);
+        }
+
+        .restaurant-error-card {
+            padding: 24px 18px;
+            border-radius: 12px;
+            margin: 32px auto 0;
+            max-width: 500px;
+            text-align: center;
+            font-size: 1.1em;
+        }
+
+        .restaurant-hero {
+            border-radius: 18px;
+            padding: 36px 32px 32px;
+            margin-bottom: 32px;
+        }
+
+        .restaurant-hero-layout,
+        .restaurant-summary-row,
+        .restaurant-profile-layout {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 18px;
+        }
+
+        .restaurant-summary-row {
+            gap: 24px;
+            margin-bottom: 36px;
+        }
+
+        .restaurant-stat-card {
+            flex: 1 1 220px;
+            border-radius: 14px;
+            padding: 24px 18px;
+            text-align: center;
+        }
+
+        .restaurant-certificate-card {
+            border-radius: 14px;
+            padding: 26px 22px;
+            margin-bottom: 30px;
+            border-left: 5px solid var(--ht-primary);
+        }
+
+        .restaurant-panel {
+            border-radius: 14px;
+            padding: 28px 22px;
+        }
+
+        .restaurant-panel-primary {
+            flex: 2 1 340px;
+        }
+
+        .restaurant-panel-secondary {
+            flex: 1 1 220px;
+            min-width: 220px;
+        }
+
+        .restaurant-muted {
+            color: var(--ht-text-muted);
+        }
+
+        .restaurant-danger-button {
+            color: var(--ht-danger) !important;
+            border: 1px solid var(--ht-danger-border) !important;
+            background: var(--ht-danger-bg) !important;
+        }
+
+        .restaurant-danger-button:hover {
+            background: var(--ht-danger-bg) !important;
+            filter: brightness(0.96);
+        }
+
+        .restaurant-lock-text {
+            color: var(--ht-text-soft);
+            font-size: 13px;
+        }
+
+        .restaurant-chart-canvas {
+            min-height: 180px;
+            height: 180px;
+            max-width: 420px;
+            width: 100%;
+            display: block;
+            margin: 0 auto;
+        }
+
+        .restaurant-map {
+            width: 100%;
+            height: 180px;
+            border-radius: 12px;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .dash-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .dash-actions {
+                width: 100%;
+            }
+
+            .dash-actions .btn-primary,
+            .dash-actions .btn-secondary {
+                flex: 1;
+                justify-content: center;
+            }
+
+            .profile-row {
+                grid-template-columns: 1fr;
+            }
+
+            .restaurant-dashboard-shell {
+                padding: 24px 12px 40px;
+            }
+        }
+
+        /* Keep leaflet map UNDER everything */
+        .leaflet-pane,
+        .leaflet-control-container {
+            z-index: 1 !important;
+        }
+
+        .map-card {
+            position: relative;
+            z-index: 0;
+        }
+
+        #restaurantMap,
+        #restaurantMap .leaflet-container {
+            position: relative;
+            z-index: 0;
+            pointer-events: auto;
+        }
+
+        /* Modal must be ABOVE leaflet */
+        .modal-backdrop {
+            z-index: 9999 !important;
+        }
+
+        .modal {
+            z-index: 10000 !important;
+        }
+    </style>
+</head>
+
+<body class="restaurant-dashboard-page">
+
+    {% include 'partials/navbar.html' %}
+
+    <div class="dashboard-wrapper restaurant-dashboard-shell">
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="restaurant-flash-message" style="
+                        {% if message.tags == 'success' %}background:#e8f5e9;color:#1b5e20;border:1px solid #a5d6a7;
+                        {% elif message.tags == 'warning' %}background:#fff8e1;color:#8d6e00;border:1px solid #ffe082;
+                        {% elif message.tags == 'error' %}background:#ffebee;color:#b71c1c;border:1px solid #ef9a9a;
+                        {% else %}background:#e3f2fd;color:#0d47a1;border:1px solid #90caf9;{% endif %}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+
+            {% if error %}
+                <div class="restaurant-error-card">
+                    <strong>{{ error }}</strong><br>
+                    <br>
+                    If you just registered, please try logging out and registering again, or contact support.
+                </div>
+            {% else %}
+                <div class="restaurant-hero">
+                    <div class="restaurant-hero-layout" style="align-items: center; justify-content: space-between;">
+                        <div>
+                            <h1 style="font-size: 2.1rem; color: #2E7D32; margin: 0 0 6px; font-family: 'Playfair Display', serif;">Welcome, {{ profile.contact_person }}</h1>
+                            <div class="restaurant-muted" style="font-size: 1.08rem;">Manage your restaurant donations and pickups.</div>
+                        </div>
+                        <div style="display: flex; gap: 12px;">
+                            <button class="btn btn--primary" style="font-size: 1rem; padding: 12px 24px;" onclick="openProfileModal()">
+                                <i class="fas fa-user-edit"></i> Edit Profile
+                            </button>
+                            <button class="btn btn-primary" style="font-size: 1rem; padding: 12px 24px;" onclick="openDonationModal()">
+                                <i class="fas fa-plus"></i> New Donation
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="restaurant-summary-row">
+                    <div class="restaurant-stat-card">
+                        <div style="font-size: 2.2rem; color: #4CAF50; margin-bottom: 8px;"><i class="fas fa-hand-holding-heart"></i></div>
+                        <div style="font-size: 1.1rem; color: #757575;">Total Donations</div>
+                        <div style="font-size: 2.1rem; font-weight: 700; color: #2E7D32;">{{ total_donations }}</div>
+                    </div>
+                    <div class="restaurant-stat-card">
+                        <div style="font-size: 2.2rem; color: #FFA000; margin-bottom: 8px;"><i class="fas fa-truck"></i></div>
+                        <div style="font-size: 1.1rem; color: #757575;">Pending Pickups</div>
+                        <div style="font-size: 2.1rem; font-weight: 700; color: #FFA000;">{{ pending_pickups }}</div>
+                    </div>
+                    <div class="restaurant-stat-card">
+                        <div style="font-size: 2.2rem; color: #388E3C; margin-bottom: 8px;"><i class="fas fa-check-circle"></i></div>
+                        <div style="font-size: 1.1rem; color: #757575;">Completed Pickups</div>
+                        <div style="font-size: 2.1rem; font-weight: 700; color: #388E3C;">{{ completed_pickups }}</div>
+                    </div>
+                </div>               <div class="restaurant-certificate-card">
+                    <div style="display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;">
+                        <div>
+                            <h2 style="margin:0 0 8px;font-size:1.25rem;color:#2E7D32;">
+                                <i class="fas fa-award"></i> CSR Recognition Certificate
+                            </h2>
+                            {% if csr_certificate_eligible %}
+                                <p class="restaurant-muted" style="margin:0;">
+                                    Congratulations! Your restaurant has completed <strong>{{ csr_completed_donations }}</strong> successful deliveries and qualifies for CSR recognition.
+                                </p>
+                            {% else %}
+                                <p class="restaurant-muted" style="margin:0;">
+                                    Complete <strong>{{ donations_remaining_for_certificate }}</strong> more delivered donation{{ donations_remaining_for_certificate|pluralize }} to unlock your certificate (minimum {{ csr_certificate_threshold }} completed deliveries).
+                                </p>
+                            {% endif %}
+                        </div>
+                        {% if csr_certificate_eligible %}
+                            <a href="{% url 'restaurant_csr_certificate' %}" class="btn btn-primary" style="padding:10px 20px;">
+                                <i class="fas fa-file-download"></i> View Certificate
+                            </a>
+                        {% else %}
+                            <button type="button" class="btn btn-secondary" style="padding:10px 20px;" disabled>
+                                <i class="fas fa-lock"></i> Locked
+                            </button>
+                        {% endif %}
+                    </div>
+                </div>
+                </div>
+                <div class="restaurant-profile-layout" style="align-items: flex-start;">
+                    <div class="restaurant-panel restaurant-panel-primary">
+                        <h2 style="font-size: 1.3rem; color: #2E7D32; margin: 0 0 18px; font-family: 'Playfair Display', serif;">Profile Snapshot</h2>
+                        <div style="display: flex; align-items: center; gap: 18px; margin-bottom: 12px;">
+                            <div style="width: 54px; height: 54px; border-radius: 50%; background: #E8F5E9; display: flex; align-items: center; justify-content: center; font-size: 1.7rem; color: #2E7D32; font-weight: 700;">{{ profile.business_name|first|upper }}</div>
+                            <div>
+                                <div style="font-size: 1.1rem; font-weight: 600; color: #2E7D32;">{{ profile.business_name }}</div>
+                                <div style="font-size: 0.98rem; color: #666;">{{ profile.contact_person }}</div>
+                            </div>
+                        </div>
+                        <div style="font-size: 1rem; color: #555; margin-bottom: 6px;"><i class="fas fa-phone-alt" style="color:#4CAF50;margin-right:6px;"></i>{{ profile.phone }}</div>
+                        <div style="font-size: 1rem; color: #555; margin-bottom: 6px;"><i class="fas fa-map-marker-alt" style="color:#FFA000;margin-right:6px;"></i>{{ profile.address }}, {{ profile.city }}</div>
+                    </div>
+                    <div class="restaurant-panel restaurant-panel-secondary">
+                        <h2 style="font-size: 1.1rem; color: #2E7D32; margin: 0 0 12px; font-family: 'Playfair Display', serif;">Location</h2>
+                        <div id="restaurantMap" class="restaurant-map"></div>
+                        <div style="font-size: 0.95rem; color: #888; margin-top: 8px;">{{ profile.address }}, {{ profile.city }}</div>
+                    </div>
+                </div>
+                <!-- Add your tables, modals, and other dashboard content here as needed -->
+
+                <!-- New Donation Modal (Corrected) -->
+                <div class="modal-backdrop" id="donationModal">
+                    <div class="modal">
+                        <div class="modal-header">
+                            <h3>Add new donation</h3>
+                            <button class="modal-close" onclick="closeDonationModal()">&times;</button>
+                        </div>
+                        <form method="POST" action="">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="add_donation">
+                            <div class="form-group">
+                                <label class="form-label">Food type</label>
+                                <input class="modal-input" name="food_type" placeholder="e.g. Rice & curry, sandwiches" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Quantity (meals)</label>
+                                <input class="modal-input" type="number" name="quantity" min="1" placeholder="e.g. 40" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Cooked at</label>
+                                <input class="modal-input" type="datetime-local" name="cooked_at" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Expiry at</label>
+                                <input class="modal-input" type="datetime-local" name="expiry_at" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Storage type</label>
+                                <select class="modal-input" name="storage_type" required>
+                                    <option value="hot">Hot</option>
+                                    <option value="cold">Cold</option>
+                                    <option value="room_temp">Room Temperature</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Safety notes</label>
+                                <textarea class="modal-textarea" name="safety_notes" placeholder="Packaging, allergens, or handling notes"></textarea>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="submit" class="btn-primary">
+                                    <i class="fas fa-plus"></i> Save donation
+                                </button>
+                                <button type="button" class="btn-secondary" onclick="closeDonationModal()">
+                                    Cancel
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <script>
+                function closeDonationModal() {
+                    document.getElementById('donationModal').style.display = 'none';
+                }
+                function openDonationModal() {
+                    document.getElementById('donationModal').style.display = 'flex';
+                }
+                // Attach openDonationModal to the button
+                document.querySelectorAll('.btn.btn--primary').forEach(btn => {
+                    if (btn.textContent.includes('New Donation')) {
+                        btn.onclick = openDonationModal;
+                    }
+                });
+                // Close modal when clicking on backdrop
+                document.getElementById('donationModal').addEventListener('click', function(e) {
+                    if (e.target === this) closeDonationModal();
+                });
+                </script>
+            {% endif %}
+        <h2 class="section-title">
+            <i class="fas fa-utensils"></i>
+            Your recent donations
+        </h2>
+
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Food Type</th>
+                        <th>Quantity</th>
+                        <th>Date & Time</th>
+                        <th>Food Safety</th>
+                        <th>Expiry / Radius</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for r in requests %}
+                    <tr>
+                        <td>{{ r.food_type }}</td>
+                        <td>{{ r.quantity }} meals</td>
+                        <td>{{ r.timestamp|localtime|date:"M d, Y — h:i A" }}</td>
+                        <td>
+                            <span class="status-pill {{ r.safety_badge_class }}">
+                                <i class="fas {{ r.safety_icon }}"></i> {{ r.safety_status }}
+                            </span>
+                        </td>
+                        <td>
+                            <span class="status-pill {{ r.status_class }}">
+                                {% if r.status_label == "Delivered" %}
+                                <i class="fas fa-check"></i>
+                                {% elif r.status_label == "Reached NGO" %}
+                                <i class="fas fa-box-open"></i>
+                                {% elif r.status_label == "Volunteer Assigned" %}
+                                <i class="fas fa-truck"></i>
+                                {% elif r.status_label == "Accepted by NGO" %}
+                                <i class="fas fa-handshake"></i>
+                                {% else %}
+                                <i class="fas fa-clock"></i>
+                                {% endif %}
+                                {{ r.status_label }}
+                            </span>
+                            <div style="margin-top:6px;font-size:12px;color:#666;">
+                                {{ r.time_remaining_readable }} left | Notified NGOs: {{ r.active_notifications_count }}
+                            </div>
+                        </td>
+                        <td>
+                            <span class="status-pill status-neutral">Radius {{ r.current_radius_km }} km</span>
+                            <div style="margin-top:6px;font-size:12px;color:#666;">
+                                Rule: {{ r.radius_debug_label|default:"-" }}
+                            </div>
+                        </td>
+                        <td>
+                            {% if r.can_delete %}
+                            <form method="post" style="display:inline;" onsubmit="return confirm('Delete this donation? This cannot be undone.');">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="delete_donation">
+                                <input type="hidden" name="donation_id" value="{{ r.id }}">
+                                <button type="submit" class="btn btn-secondary restaurant-danger-button" style="padding:6px 14px;font-size:13px;">
+                                    <i class="fas fa-trash-alt"></i> Delete
+                                </button>
+                            </form>
+                            {% else %}
+                            <span class="restaurant-lock-text">Locked</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" style="text-align:center; padding: 24px; color:#777;">
+                            No donations yet. Click <strong>“New Donation”</strong> to add your first one!
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Chart -->
+        <div class="chart-card">
+            <h2 class="section-title" style="margin-top:0;">
+                <i class="fas fa-chart-bar"></i>
+                Donation overview
+            </h2>
+            <canvas id="donationChart" class="restaurant-chart-canvas"></canvas>
+        </div>
+
+        <h2 class="section-title" style="margin-top:32px;">
+            <i class="fas fa-hands-helping"></i> Food Requests from NGOs in Your City
+        </h2>
+        <div class="table-wrapper" style="margin-bottom:32px;">
+            <table>
+                <thead>
+                    <tr>
+                        <th>NGO Name</th>
+                        <th>Food Type</th>
+                        <th>Quantity</th>
+                        <th>Requested At</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for req in nearby_ngo_requests %}
+                    <tr>
+                        <td>{{ req.ngo.name }}</td>
+                        <td>{{ req.food_type }}</td>
+                        <td>{{ req.quantity }}</td>
+                        <td>{{ req.timestamp|date:"M d, Y — h:i A" }}</td>
+                        <td>
+                            {% if req.fulfilled %}
+                            <span class="status-pill status-complete">
+                                <i class="fas fa-check"></i> Delivered
+                            </span>
+                            {% elif req.accepted_by %}
+                            <span class="status-pill status-pending">
+                                <i class="fas fa-clock"></i> In Progress
+                            </span>
+                            {% else %}
+                            <span class="status-pill status-pending">
+                                <i class="fas fa-hourglass"></i> New
+                            </span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <!-- Accept button logic to be implemented -->
+                            {% if not req.accepted_by %}
+                            <form method="post" style="display:inline;">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="accept_ngo_request">
+                                <input type="hidden" name="ngo_request_id" value="{{ req.id }}">
+                                <button type="submit" class="btn btn-primary" style="padding:6px 18px;font-size:13px;">Accept</button>
+                            </form>
+                            {% else %}
+                            <span style="color:#777;font-size:13px;">Accepted</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" style="text-align:center; padding: 24px; color:#777;">No food requests from NGOs in your city right now.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Donation Modal -->
+    <div class="modal-backdrop" id="donationModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>Add new donation</h3>
+                <button class="modal-close" onclick="closeDonationModal()">&times;</button>
+            </div>
+
+            <form method="POST" action="">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="add_donation">
+
+                <div class="form-group">
+                    <label class="form-label">Food type</label>
+                    <input class="modal-input" name="food_type" placeholder="e.g. Rice & curry, sandwiches" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Quantity (meals)</label>
+                    <input class="modal-input" type="number" name="quantity" min="1" placeholder="e.g. 40" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Cooked at</label>
+                    <input class="modal-input" type="datetime-local" name="cooked_at" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Expiry at</label>
+                    <input class="modal-input" type="datetime-local" name="expiry_at" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Storage type</label>
+                    <select class="modal-input" name="storage_type" required>
+                        <option value="hot">Hot</option>
+                        <option value="cold">Cold</option>
+                        <option value="room_temp">Room Temperature</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Safety notes</label>
+                    <textarea class="modal-textarea" name="safety_notes" placeholder="Packaging, allergens, or handling notes"></textarea>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="submit" class="btn-primary">
+                        <i class="fas fa-plus"></i> Save donation
+                    </button>
+                    <button type="button" class="btn-secondary" onclick="closeDonationModal()">
+                        Cancel
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Profile Modal -->
+    <div class="modal-backdrop" id="profileModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>Edit profile</h3>
+                <button class="modal-close" onclick="closeProfileModal()">&times;</button>
+            </div>
+
+            <form method="POST" action="" id="profileEditForm">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="update_profile">
+
+                <div class="form-group">
+                    <label class="form-label">Business name</label>
+                    <input class="modal-input" name="business_name" value="{{ profile.business_name }}" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Contact person</label>
+                    <input class="modal-input" name="contact_person" value="{{ profile.contact_person }}" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Phone</label>
+                    <input class="modal-input" name="phone" value="{{ profile.phone }}" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">State</label>
+                    <select id="stateSelect" name="state" class="modal-input" required>
+                        <option value="">Select State</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">District</label>
+                    <select id="districtSelect" name="district" class="modal-input" required disabled>
+                        <option value="">Select District</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Taluka</label>
+                    <select id="talukaSelect" name="taluka" class="modal-input" required disabled>
+                        <option value="">Select Taluka</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">City / Village</label>
+                    <select id="citySelect" name="city" class="modal-input" required disabled>
+                        <option value="">Select City</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Pincode</label>
+                    <input id="pincodeInput" class="modal-input" name="pincode"
+                        value="{{ profile.pincode|default:'' }}">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Address</label>
+                    <textarea class="modal-textarea" name="address" required>{{ profile.address }}</textarea>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="submit" class="btn-primary">
+                        <i class="fas fa-save"></i> Save
+                    </button>
+                    <button type="button" class="btn-secondary" onclick="closeProfileModal()">
+                        Cancel
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const completed = Number('{{ completed_pickups|default:0 }}');
+            const pending = Number('{{ pending_pickups|default:0 }}');
+            const chartCanvas = document.getElementById("donationChart");
+            console.log("[Chart Debug] Script loaded. Canvas:", chartCanvas);
+            if (chartCanvas) {
+                chartCanvas.style.minHeight = "320px";
+                chartCanvas.height = 320;
+                const ctx = chartCanvas.getContext("2d");
+                console.log("[Chart Debug] Got 2D context:", ctx);
+                if (typeof Chart === "undefined") {
+                    console.error("[Chart Debug] Chart.js is not loaded!");
+                } else {
+                    new Chart(ctx, {
+                        type: "bar",
+                        data: {
+                            labels: ["Completed", "Pending"],
+                            datasets: [{
+                                data: [completed, pending],
+                                backgroundColor: ["#2b8a3e", "#c47f00"],
+                                borderColor: ["#1f6f30", "#a36600"],
+                                borderWidth: 2,
+                                borderRadius: 8,
+                                hoverBackgroundColor: ["#3da150", "#d58c00"]
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            aspectRatio: 2.2,
+                            plugins: {
+                                legend: { display: false },
+                                tooltip: {
+                                    callbacks: {
+                                        label: function(context) {
+                                            return context.dataset.data[context.dataIndex] + ' pickups';
+                                        }
+                                    }
+                                }
+                            },
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    ticks: { stepSize: 1 }
+                                }
+                            }
+                        }
+                    });
+                    console.log("[Chart Debug] Chart should be rendered now.");
+                }
+            } else {
+                console.error("[Chart Debug] donationChart canvas not found!");
+            }
+        });
+
+        // Enable disabled selects before submitting profile form
+        document.addEventListener('DOMContentLoaded', function () {
+            var form = document.getElementById('profileEditForm');
+            if (form) {
+                form.addEventListener('submit', function () {
+                    ['stateSelect', 'districtSelect', 'talukaSelect', 'citySelect'].forEach(function(id) {
+                        var el = document.getElementById(id);
+                        if (el && el.disabled) el.disabled = false;
+                    });
+                });
+            }
+        });
+        // Modal helpers
+        function openDonationModal() {
+            document.getElementById("donationModal").style.display = "flex";
+        }
+        function closeDonationModal() {
+            document.getElementById("donationModal").style.display = "none";
+        }
+        function openProfileModal() {
+            document.getElementById("profileModal").style.display = "flex";
+        }
+        function closeProfileModal() {
+            document.getElementById("profileModal").style.display = "none";
+        }
+
+        // Close modals when clicking on backdrop
+        document.querySelectorAll('.modal-backdrop').forEach(backdrop => {
+            backdrop.addEventListener('click', function (e) {
+                if (e.target === this) {
+                    this.style.display = 'none';
+                }
+            });
+        });
+
+        // ESC closes modals
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') {
+                closeDonationModal();
+                closeProfileModal();
+            }
+        });
+
+        // Map init (with debug and fallback)
+        let lat = Number('{{ lat }}');
+        let lng = Number('{{ lng }}');
+        console.log('[Map Debug] lat:', lat, 'lng:', lng);
+        if (isNaN(lat) || isNaN(lng)) {
+            console.warn('[Map Debug] Invalid lat/lng from backend, using default.');
+            lat = 19.0760; // Mumbai default
+            lng = 72.8777;
+        }
+        const mapDiv = document.getElementById('restaurantMap');
+        if (!mapDiv) {
+            console.error('[Map Debug] #restaurantMap div not found!');
+        } else {
+            const map = L.map('restaurantMap').setView([lat, lng], 13);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19,
+                attribution: '&copy; OpenStreetMap contributors'
+            }).addTo(map);
+            L.marker([lat, lng]).addTo(map)
+                .bindPopup(`<strong>{{ profile.business_name|escapejs }}</strong><br>{{ profile.city|escapejs }}`)
+                .openPopup();
+            console.log('[Map Debug] Map initialized.');
+        }
+    </script>
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            console.log("✅ Location JS loaded");
+
+            const stateSelect = document.getElementById("stateSelect");
+            const districtSelect = document.getElementById("districtSelect");
+            const talukaSelect = document.getElementById("talukaSelect");
+            const citySelect = document.getElementById("citySelect");
+            const pincodeInput = document.getElementById("pincodeInput");
+
+            const stateMap = {};     // name -> id
+            const districtMap = {};  // name -> id
+
+            // helpers
+            function resetSelect(sel, placeholder, disabled = true) {
+                if (!sel) {
+                    console.warn("resetSelect skipped — element not found");
+                    return;
+                }
+                sel.innerHTML = `<option value="">${placeholder}</option>`;
+                sel.disabled = disabled;
+            }
+
+            resetSelect(districtSelect, "Select District", true);
+            resetSelect(talukaSelect, "Select Taluka", true);
+            resetSelect(citySelect, "Select City", true);
+
+            // 1) STATES
+            fetch("/donations/api/states/")
+                .then(r => r.json())
+                .then(data => {
+                    if (!data?.data?.states) throw new Error("Bad states response");
+                    data.data.states.forEach(s => {
+                        stateMap[s.name] = s.id;
+                        stateSelect.innerHTML += `<option value="${s.name}">${s.name}</option>`;
+                    });
+
+                    // prefill (optional)
+                    const savedState = "{{ profile.state|default:''|escapejs }}";
+                    if (savedState) {
+                        stateSelect.value = savedState;
+                        stateSelect.dispatchEvent(new Event("change"));
+                    }
+                })
+                .catch(err => console.error("State fetch failed:", err));
+
+            // 2) DISTRICTS (needs state_id)
+            stateSelect.addEventListener("change", () => {
+                const stateName = stateSelect.value;
+                const stateId = stateMap[stateName];
+                console.log("🔥 STATE CHANGED TO:", stateName);
+
+                resetSelect(districtSelect, "Select District", true);
+                resetSelect(talukaSelect, "Select Taluka", true);
+                resetSelect(citySelect, "Select City", true);
+
+                if (!stateId) return;
+
+                fetch(`/donations/api/districts/?state_id=${stateId}`)
+                    .then(r => r.json())
+                    .then(data => {
+                        if (!data?.data?.districts) throw new Error("Bad districts response");
+                        Object.keys(districtMap).forEach(k => delete districtMap[k]);
+
+                        data.data.districts.forEach(d => {
+                            districtMap[d.name] = d.id;
+                            districtSelect.innerHTML += `<option value="${d.name}">${d.name}</option>`;
+                        });
+                        districtSelect.disabled = false;
+
+                        const savedDistrict = "{{ profile.district|default:''|escapejs }}";
+                        if (savedDistrict) {
+                            districtSelect.value = savedDistrict;
+                            districtSelect.dispatchEvent(new Event("change"));
+                        }
+                    })
+                    .catch(err => console.error("District fetch failed:", err));
+            });
+
+            // 3) TALUKAS (needs district_id)
+            districtSelect.addEventListener("change", () => {
+                const districtName = districtSelect.value;
+                const districtId = districtMap[districtName];
+                console.log("🔥 DISTRICT CHANGED TO:", districtName, "ID:", districtId);
+
+                resetSelect(talukaSelect, "Select Taluka", true);
+                resetSelect(citySelect, "Select City", true);
+
+                if (!districtId) return;
+
+                fetch(`/donations/api/talukas/?district_id=${districtId}`)
+                    .then(r => r.json())
+                    .then(data => {
+                        if (!data?.data?.talukas) throw new Error("Bad talukas response");
+
+                        data.data.talukas.forEach(t => {
+                            talukaSelect.innerHTML += `<option value="${t.name}">${t.name}</option>`;
+                        });
+                        talukaSelect.disabled = false;
+
+                        const savedTaluka = "{{ profile.taluka|default:''|escapejs }}";
+                        if (savedTaluka) {
+                            talukaSelect.value = savedTaluka;
+                            talukaSelect.dispatchEvent(new Event("change"));
+                        }
+                    })
+                    .catch(err => console.error("Taluka fetch failed:", err));
+            });
+
+            // 4) VILLAGES (needs state+district+taluka) → we show as City dropdown
+            talukaSelect.addEventListener("change", () => {
+                const state = stateSelect.value;
+                const district = districtSelect.value;
+                const taluka = talukaSelect.value;
+
+                resetSelect(citySelect, "Select City", true);
+
+                if (!state || !district || !taluka) return;
+
+                fetch(`/donations/api/villages/?state=${encodeURIComponent(state)}&district=${encodeURIComponent(district)}&taluka=${encodeURIComponent(taluka)}`)
+                    .then(r => r.json())
+                    .then(data => {
+                        const villages = data?.data?.villages || [];
+                        if (!villages.length) {
+                            console.warn("❌ No villages found");
+                            return;
+                        }
+
+                        villages.forEach(v => {
+                            // v.code in their docs is a code field (often pincode-like in examples)
+                            citySelect.innerHTML += `<option value="${v.name}" data-pin="${v.code || ''}">${v.name}</option>`;
+                        });
+
+                        citySelect.disabled = false;
+
+                        const savedCity = "{{ profile.city|default:''|escapejs }}";
+                        if (savedCity) citySelect.value = savedCity;
+                    })
+                    .catch(err => console.error("City/Village fetch failed:", err));
+            });
+
+            // 5) Auto-fill PIN when city changes (if API provides code)
+            citySelect.addEventListener("change", () => {
+                const opt = citySelect.options[citySelect.selectedIndex];
+                const pin = opt?.getAttribute("data-pin") || "";
+                if (pin) pincodeInput.value = pin;
+            });
+        });
+    </script>
+
+</body>
+
+</html>

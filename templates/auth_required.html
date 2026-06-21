@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+{% load static %}
+
+<head>
+    <meta charset="utf-8">
+    <title>Authentication Required — HappyTummy</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <link rel="icon" href="{% static 'Assets/logo.png' %}" type="image/png" />
+
+    <style>
+        body {
+            background: #f5f5f5;
+            font-family: Poppins, sans-serif;
+            margin: 0;
+            /* Space for navbar */
+        }
+
+        .box {
+            padding: 40px;
+            background: white;
+            border-radius: 12px;
+            width: 350px;
+            margin: auto;
+            text-align: center;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+            margin: 120px auto 0 auto;
+        }
+
+        .btn {
+            display: block;
+            margin: 10px 0;
+            padding: 12px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .login {
+            background: #7BA46C;
+            color: white;
+        }
+
+        .register {
+            background: #ffffff;
+            border: 2px solid #7BA46C;
+            color: #7BA46C;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- ⭐ SAME NAVBAR FROM index.html ⭐ -->
+    <header class="nav">
+        <div class="container nav__inner">
+            <a href="/" class="brand">
+                <img src="{% static 'Assets/logo.png' %}" alt="HappyTummy Logo" class="brand__logo" />
+                <span class="brand__name">HappyTummy Foundation</span>
+            </a>
+
+            <button class="nav__toggle" id="menuToggle">
+                <span class="nav__bar"></span>
+                <span class="nav__bar"></span>
+                <span class="nav__bar"></span>
+            </button>
+
+            <nav class="nav__links" id="navLinks">
+                <a href="/">Home</a>
+                <a href="/#about">About</a>
+                <a href="/#how">How It Works</a>
+                <a href="/#impact">Impact</a>
+                <a href="/#involved">Get Involved</a>
+                <a href="/#contact">Contact</a>
+
+                {% if user.is_authenticated %}
+                <a href="/dashboard/">Dashboard</a>
+                {% else %}
+                <a href="/auth-required/">Dashboard</a>
+                {% endif %}
+            </nav>
+
+        </div>
+    </header>
+    <!-- ⭐ END NAVBAR ⭐ -->
+
+    <div class="box">
+        <h2>Authentication Required</h2>
+        <p>You need to login or register to access the dashboard.</p>
+
+        <a class="btn login" href="/login/">Login</a>
+        <a class="btn register" href="/register/">Register</a>
+    </div>
+
+    <script src="{% static 'js/script.js' %}"></script>
+</body>
+
+</html>

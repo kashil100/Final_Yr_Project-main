@@ -1,0 +1,193 @@
+{% load static tz %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>NGO Gallery - HappyTummy</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <link rel="stylesheet" href="{% static 'css/theme.css' %}">
+    <link rel="icon" href="{% static 'Assets/logo.png' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    {% include 'partials/navbar.html' %}
+
+    <main class="ngo-gallery-page-shell">
+        <div class="ngo-gallery-page-wrap">
+            {% if error %}
+                <div class="dashboard-flash-message dashboard-flash-warning">
+                    {{ error }}
+                </div>
+            {% else %}
+                {% if messages %}
+                    <div class="dashboard-flash-stack">
+                        {% for message in messages %}
+                            <div class="dashboard-flash-message {% if message.tags %}dashboard-flash-{{ message.tags }}{% endif %}">
+                                {{ message }}
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+
+                <section class="ngo-gallery-hero">
+                    <div>
+                        <p class="ngo-gallery-eyebrow">Delivery Transparency</p>
+                        <h1>{{ profile.name }} Distribution Proof Gallery</h1>
+                        <p class="ngo-gallery-subtitle">Upload proof photos that show delivered food being distributed to needy people. Each proof image is linked to a completed delivery.</p>
+                    </div>
+                    <a href="{% url 'ngo_dashboard' %}" class="ngo-gallery-back-link">
+                        <i class="fas fa-arrow-left"></i>
+                        Back to Dashboard
+                    </a>
+                </section>
+
+                <section class="ngo-gallery-section">
+                    <div class="ngo-gallery-grid-wrap">
+                        <h3 class="ngo-gallery-title">Pending Transparency Proof</h3>
+                        <p class="ngo-gallery-subtitle">{{ pending_transparency_count }} completed deliver{{ pending_transparency_count|pluralize:"y,ies" }} still need at least one proof upload. Deliveries without proof remain pending after {{ transparency_proof_pending_hours }} hours.</p>
+                        {% if pending_transparency_deliveries %}
+                            <div class="table-wrapper">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Delivery</th>
+                                            <th>Source</th>
+                                            <th>Confirmed</th>
+                                            <th>Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for delivery in pending_transparency_deliveries %}
+                                        <tr>
+                                            <td>Task #{{ delivery.id }}</td>
+                                            <td>
+                                                {% if delivery.request %}
+                                                    {{ delivery.request.restaurant.business_name }}
+                                                {% elif delivery.ngo_request.accepted_by %}
+                                                    {{ delivery.ngo_request.accepted_by.business_name }}
+                                                {% else %}
+                                                    Unknown source
+                                                {% endif %}
+                                            </td>
+                                            <td>{{ delivery.ngo_confirmed_at|localtime|date:"d M Y, g:i A"|default:"Confirmed" }}</td>
+                                            <td>{{ delivery.get_transparency_status_display }}</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        {% else %}
+                            <div class="ngo-gallery-empty">
+                                <i class="fas fa-badge-check"></i>
+                                <p>All completed deliveries already have transparency proof uploaded.</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </section>
+
+                <section class="ngo-gallery-section">
+                    <div class="ngo-gallery-layout">
+                        <div class="ngo-gallery-upload-card">
+                            <h3>Upload transparency proof</h3>
+                            <p>Select the completed delivery this proof belongs to, then upload an image showing food reaching the community. Image files only, up to 5 MB.</p>
+                            <form method="post" enctype="multipart/form-data" class="ngo-gallery-form">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="upload_gallery_image">
+                                <label class="form-label" for="pickup-task-id">Completed Delivery</label>
+                                <select id="pickup-task-id" class="modal-input" name="pickup_task_id" required>
+                                    <option value="">Select completed delivery</option>
+                                    {% for delivery in pending_transparency_deliveries %}
+                                        <option value="{{ delivery.id }}">
+                                            Task #{{ delivery.id }} -
+                                            {% if delivery.request %}
+                                                {{ delivery.request.restaurant.business_name }}
+                                            {% elif delivery.ngo_request.accepted_by %}
+                                                {{ delivery.ngo_request.accepted_by.business_name }}
+                                            {% else %}
+                                                Delivery source
+                                            {% endif %}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                                <label class="form-label" for="gallery-image">Distribution Photo</label>
+                                <input id="gallery-image" class="modal-input" type="file" name="image" accept=".jpg,.jpeg,.png,.webp,.gif,image/*" required>
+                                <label class="form-label" for="gallery-caption">Caption</label>
+                                <textarea id="gallery-caption" class="modal-textarea" name="caption" maxlength="255" placeholder="Meals served to children after delivery Task #12"></textarea>
+                                <button type="submit" class="btn-primary ngo-gallery-submit">
+                                    <i class="fas fa-cloud-upload-alt"></i>
+                                    Upload Proof
+                                </button>
+                            </form>
+                        </div>
+
+                        <div class="ngo-gallery-grid-wrap">
+                            {% if gallery_page.object_list %}
+                                <div class="ngo-gallery-grid">
+                                    {% for item in gallery_page %}
+                                        <article class="ngo-gallery-card">
+                                            <div class="ngo-gallery-image-wrap">
+                                                <img src="{{ item.image.url }}" alt="{{ item.caption|default:'Food distribution photo' }}" class="ngo-gallery-image" loading="lazy">
+                                            </div>
+                                            <div class="ngo-gallery-card-body">
+                                                <div class="ngo-gallery-meta">
+                                                    <span><i class="fas fa-calendar-alt"></i> {{ item.created_at|localtime|date:"d M Y" }}</span>
+                                                    <span><i class="fas fa-clock"></i> {{ item.created_at|localtime|time:"g:i A" }}</span>
+                                                </div>
+                                                <div class="ngo-gallery-meta">
+                                                    <span>
+                                                        <i class="fas fa-link"></i>
+                                                        Delivery:
+                                                        {% if item.pickup_task %}
+                                                            Task #{{ item.pickup_task.id }}
+                                                        {% else %}
+                                                            Manual upload
+                                                        {% endif %}
+                                                    </span>
+                                                    {% if item.pickup_task %}
+                                                        <span>
+                                                            <i class="fas fa-truck"></i>
+                                                            {% if item.pickup_task.request %}
+                                                                {{ item.pickup_task.request.restaurant.business_name }}
+                                                            {% elif item.pickup_task.ngo_request.accepted_by %}
+                                                                {{ item.pickup_task.ngo_request.accepted_by.business_name }}
+                                                            {% else %}
+                                                                Delivery source
+                                                            {% endif %}
+                                                        </span>
+                                                    {% endif %}
+                                                </div>
+                                                {% if item.caption %}
+                                                    <p class="ngo-gallery-caption">{{ item.caption }}</p>
+                                                {% else %}
+                                                    <p class="ngo-gallery-caption ngo-gallery-caption-empty">Distribution transparency proof photo</p>
+                                                {% endif %}
+                                            </div>
+                                        </article>
+                                    {% endfor %}
+                                </div>
+
+                                {% if gallery_page.paginator.num_pages > 1 %}
+                                    <nav class="ngo-gallery-pagination" aria-label="Food distribution gallery pages">
+                                        {% if gallery_page.has_previous %}
+                                            <a href="?gallery_page={{ gallery_page.previous_page_number }}" class="ngo-gallery-page-link">Previous</a>
+                                        {% endif %}
+                                        <span class="ngo-gallery-page-status">Page {{ gallery_page.number }} of {{ gallery_page.paginator.num_pages }}</span>
+                                        {% if gallery_page.has_next %}
+                                            <a href="?gallery_page={{ gallery_page.next_page_number }}" class="ngo-gallery-page-link">Next</a>
+                                        {% endif %}
+                                    </nav>
+                                {% endif %}
+                            {% else %}
+                                <div class="ngo-gallery-empty">
+                                    <i class="fas fa-image"></i>
+                                    <p>No distribution photos uploaded yet.</p>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </section>
+            {% endif %}
+        </div>
+    </main>
+</body>
+</html>

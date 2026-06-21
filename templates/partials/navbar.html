@@ -1,0 +1,82 @@
+{% load static %}
+
+<head>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&family=Playfair+Display:wght@600;700&display=swap"
+        rel="stylesheet">
+    <link rel="icon" href="{% static 'Assets/logo.png' %}" type="image/png" />
+</head>
+<header class="nav">
+    <div class="container nav__inner">
+        <a href="/" class="brand">
+            <span class="brand__name">HappyTummy Foundation</span>
+        </a>
+
+        <button class="nav__toggle" id="menuToggle">
+            <span class="nav__bar"></span><span class="nav__bar"></span><span class="nav__bar"></span>
+        </button>
+
+        <nav class="nav__links" id="navLinks">
+            <a href="/#about">About</a>
+            <a href="/#how">How It Works</a>
+            <a href="/#impact">Impact</a>
+            <a href="/#involved">Get Involved</a>
+            <a href="/#contact">Contact</a>
+
+            <div class="dropdown nav-dropdown">
+                <a class="nav-link dropbtn">Dashboard</a>
+
+                <div class="dropdown-content">
+                    {% if user.is_authenticated %}
+                    <a href="/dashboard/">My Dashboard</a>
+                    <a href="/logout/">Logout</a>
+                    {% else %}
+                    <a href="/restaurant/login/">Restaurant Login</a>
+                    <a href="/volunteer/login/">Volunteer Login</a>
+                    <a href="/ngo/login/">NGO Login</a>
+                    {% endif %}
+                </div>
+            </div>
+            <button id="themeToggleBtn" type="button" class="nav-theme-toggle">
+                <i class="fas fa-moon"></i> Dark Mode
+            </button>
+        </nav>
+    </div>
+</header>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const themeBtn = document.getElementById('themeToggleBtn');
+        const STORAGE_KEY = 'theme';
+
+        function setTheme(dark) {
+            if (dark) {
+                document.body.classList.add('dark-mode');
+                if (themeBtn) {
+                    themeBtn.innerHTML = '<i class="fas fa-sun"></i> Light Mode';
+                    themeBtn.style.background = '#23272a';
+                    themeBtn.style.color = '#fff';
+                }
+            } else {
+                document.body.classList.remove('dark-mode');
+                if (themeBtn) {
+                    themeBtn.innerHTML = '<i class="fas fa-moon"></i> Dark Mode';
+                    themeBtn.style.background = '#eee';
+                    themeBtn.style.color = '#222';
+                }
+            }
+            document.dispatchEvent(new CustomEvent('theme-changed', { detail: { dark } }));
+        }
+
+        let dark = localStorage.getItem(STORAGE_KEY) === 'dark';
+        setTheme(dark);
+
+        if (themeBtn) {
+            themeBtn.addEventListener('click', function () {
+                dark = !dark;
+                setTheme(dark);
+                localStorage.setItem(STORAGE_KEY, dark ? 'dark' : 'light');
+            });
+        }
+    });
+</script>
+
