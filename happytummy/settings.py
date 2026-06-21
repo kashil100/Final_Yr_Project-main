@@ -197,12 +197,12 @@ EMAIL_BACKEND = os.getenv(
     "EMAIL_BACKEND",
     "django.core.mail.backends.console.EmailBackend" if DEBUG else "django.core.mail.backends.smtp.EmailBackend",
 )
-EMAIL_HOST = os.getenv("SMTP_HOST", "")
-EMAIL_PORT = int(os.getenv("SMTP_PORT", "587"))
-EMAIL_HOST_USER = os.getenv("SMTP_USERNAME", "")
-EMAIL_HOST_PASSWORD = os.getenv("SMTP_PASSWORD", "")
-EMAIL_USE_TLS = env_bool("SMTP_USE_TLS", "true")
-EMAIL_TIMEOUT = int(os.getenv("SMTP_TIMEOUT", "10"))
+EMAIL_HOST = os.getenv("EMAIL_HOST", "")
+EMAIL_PORT = int(os.getenv("EMAIL_PORT", "587"))
+EMAIL_HOST_USER = os.getenv("EMAIL_USERNAME", "")
+EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD", "")
+EMAIL_USE_TLS = env_bool("EMAIL_USE_TLS", "true")
+EMAIL_TIMEOUT = int(os.getenv("EMAIL_TIMEOUT", "10"))
 DEFAULT_FROM_EMAIL = os.getenv("SENDER_EMAIL", "HappyTummy <no-reply@happytummy.local>")
 DONATION_NOTIFICATION_SENDER_EMAIL = os.getenv("SENDER_EMAIL", DEFAULT_FROM_EMAIL)
 
