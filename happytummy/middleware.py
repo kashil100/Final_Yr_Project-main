@@ -3,7 +3,7 @@ import time
 from django.conf import settings
 from django.contrib.auth import logout
 
-BOOT_FILE = os.path.join("/tmp", ".server_boot")
+BOOT_FILE = os.path.join(settings.BASE_DIR, '.server_boot')
 
 def get_server_boot_time():
     if not os.path.exists(BOOT_FILE):
