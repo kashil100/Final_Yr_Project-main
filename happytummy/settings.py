@@ -192,11 +192,7 @@ TWILIO_FROM_NUMBER = os.getenv("TWILIO_FROM_NUMBER", "")
 MSG91_AUTH_KEY = os.getenv("MSG91_AUTH_KEY", "")
 MSG91_FLOW_ID = os.getenv("MSG91_FLOW_ID", "")
 MSG91_SENDER_ID = os.getenv("MSG91_SENDER_ID", "")
-
-EMAIL_BACKEND = os.getenv(
-    "EMAIL_BACKEND",
-    "django.core.mail.backends.console.EmailBackend" if DEBUG else "django.core.mail.backends.smtp.EmailBackend",
-)
+EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 EMAIL_HOST = os.getenv("EMAIL_HOST", "")
 EMAIL_PORT = int(os.getenv("EMAIL_PORT", "587"))
 EMAIL_HOST_USER = os.getenv("EMAIL_USERNAME", "")
