@@ -258,7 +258,7 @@ def _get_active_volunteer_profile(request):
 @login_required(login_url="/")
 def restaurant_dashboard(request):
     monitor_suspicious_deliveries()
-    notification_service.reevaluate_active_donations()
+    # notification_service.reevaluate_active_donations()
     try:
         profile = RestaurantProfile.objects.get(user=request.user)
     except RestaurantProfile.DoesNotExist:
