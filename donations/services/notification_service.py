@@ -161,7 +161,7 @@ def send_surplus_donation_email(surplus_request, ngo):
     )
     message.attach_alternative(html_body, "text/html")
     try:
-    sent_count = message.send(fail_silently=True)
+        sent_count = message.send(fail_silently=True)
     except Exception as e:
         logger.exception("Email sending failed: %s", e)
         return {
