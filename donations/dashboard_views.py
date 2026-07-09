@@ -258,13 +258,13 @@ def _get_active_volunteer_profile(request):
 @login_required(login_url="/")
 def restaurant_dashboard(request):
     monitor_suspicious_deliveries()
-    # notification_service.reevaluate_active_donations()
-    try:
-        notification_service.reevaluate_active_donations()
-    except Exception as e:
-        import logging
-        logger = logging.getLogger(__name__)
-        logger.exception("Error while reevaluating donations: %s", e)
+    notification_service.reevaluate_active_donations()
+    # try:
+    #     notification_service.reevaluate_active_donations()
+    # except Exception as e:
+    #     import logging
+    #     logger = logging.getLogger(__name__)
+    #     logger.exception("Error while reevaluating donations: %s", e)
     try:
         profile = RestaurantProfile.objects.get(user=request.user)
     except RestaurantProfile.DoesNotExist:
